@@ -54,6 +54,7 @@ func TestUnpackUnicodeString(t *testing.T) {
 	}{
 		{input: "абвгде", expected: "абвгде"},
 		{input: "а2б3в4", expected: "аабббвввв"},
+		{input: "必4西5弟\\3", expected: "必必必必西西西西西弟3"},
 		{input: "♫2♪3", expected: "♫♫♪♪♪"},
 	}
 
