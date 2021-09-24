@@ -111,6 +111,7 @@ func (l *list) Remove(i *ListItem) {
 func (l *list) MoveToFront(i *ListItem) {
 	l.Remove(i)
 	l.PushFrontItem(i)
+	l.len++
 }
 
 func NewList() List {
