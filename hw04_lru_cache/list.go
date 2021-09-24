@@ -54,15 +54,23 @@ func (l *list) InitList(i *ListItem) {
 }
 
 func (l *list) PushFrontItem(i *ListItem) {
-	oldFront := l.front
-	i.Next, oldFront.Prev = oldFront, i
-	l.front = i
+	if l.Len() > 0 {
+		oldFront := l.front
+		i.Next, oldFront.Prev = oldFront, i
+		l.front = i
+	} else {
+		l.InitList(i)
+	}
 }
 
 func (l *list) PushBackItem(i *ListItem) {
-	oldBack := l.back
-	i.Prev, oldBack.Next = oldBack, i
-	l.back = i
+	if l.Len() > 0 {
+		oldBack := l.back
+		i.Prev, oldBack.Next = oldBack, i
+		l.back = i
+	} else {
+		l.InitList(i)
+	}
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
