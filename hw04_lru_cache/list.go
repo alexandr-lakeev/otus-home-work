@@ -96,11 +96,12 @@ func (l *list) Remove(i *ListItem) {
 		l.back = i.Prev
 	}
 
-	if i.Next != nil && i.Prev != nil {
+	switch {
+	case i.Next != nil && i.Prev != nil:
 		i.Next.Prev, i.Prev.Next = i.Prev, i.Next
-	} else if i.Next != nil {
+	case i.Next != nil:
 		i.Next.Prev = nil
-	} else if i.Prev != nil {
+	case i.Prev != nil:
 		i.Prev.Next = nil
 	}
 
