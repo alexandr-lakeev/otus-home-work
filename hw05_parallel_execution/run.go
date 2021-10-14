@@ -9,60 +9,98 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
+type producer struct {
+	taskCh *chan Task
+	doneCh *chan bool
+}
+
+type consumer struct {
+	taskCh      *chan Task
+	doneCh      *chan bool
+	resultCh    *chan error
+	result      error
+	mu          sync.Mutex
+	errorsCount int
+	errorsLimit int
+}
+
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	var mu sync.Mutex
 	taskCh := make(chan Task)
 	doneCh := make(chan bool)
-	errors := 0
-	var result error
+	resultCh := make(chan error, n)
+	defer close(resultCh)
 
+	go newProducer(&taskCh, &doneCh).produce(tasks)
+	go newConsumer(&taskCh, &doneCh, &resultCh, m).consume(n)
+
+	return <-resultCh
+
+}
+
+func newProducer(taskCh *chan Task, doneCh *chan bool) *producer {
+	return &producer{
+		taskCh: taskCh,
+		doneCh: doneCh,
+	}
+}
+
+func (p *producer) produce(tasks []Task) {
+	defer close(*p.doneCh)
+	defer close(*p.taskCh)
+
+	taskKey := 0
+	for taskKey < len(tasks) {
+		select {
+		case *p.taskCh <- tasks[taskKey]:
+			taskKey++
+		case <-*p.doneCh:
+			return
+		}
+	}
+}
+
+func newConsumer(taskCh *chan Task, doneCh *chan bool, resultCh *chan error, errorsLimit int) *consumer {
+	return &consumer{
+		taskCh:      taskCh,
+		doneCh:      doneCh,
+		resultCh:    resultCh,
+		errorsLimit: errorsLimit,
+	}
+}
+
+func (c *consumer) consume(n int) {
 	var wg sync.WaitGroup
-	wg.Add(n + 1)
+	wg.Add(n)
 
 	for i := 0; i < n; i++ {
 		go func() {
 			defer wg.Done()
 			for {
 				select {
-				case <-doneCh:
-					return
-				case t, ok := <-taskCh:
+				case t, ok := <-*c.taskCh:
 					if !ok {
 						return
 					}
-					err := t()
-					if err != nil {
-						mu.Lock()
-						errors++
-						if errors == m {
-							doneCh <- true
-							result = ErrErrorsLimitExceeded
-						}
-						mu.Unlock()
-					}
+					c.doTask(t)
 				}
 			}
 		}()
 	}
 
-	go func() {
-		defer wg.Done()
-		defer close(taskCh)
-		defer close(doneCh)
-
-		taskKey := 0
-		for taskKey < len(tasks) {
-			select {
-			case taskCh <- tasks[taskKey]:
-				taskKey++
-			case <-doneCh:
-				return
-			}
-		}
-	}()
-
 	wg.Wait()
+	*c.resultCh <- c.result
+}
 
-	return result
+func (c *consumer) doTask(t Task) {
+	err := t()
+	if err != nil {
+		c.mu.Lock()
+		c.errorsCount++
+		if c.errorsCount == c.errorsLimit {
+			*c.doneCh <- true
+			c.result = ErrErrorsLimitExceeded
+		}
+		c.mu.Unlock()
+	}
 }
