@@ -35,7 +35,6 @@ func Run(tasks []Task, n, m int) error {
 	go newConsumer(&taskCh, &doneCh, &resultCh, m).consume(n)
 
 	return <-resultCh
-
 }
 
 func newProducer(taskCh *chan Task, doneCh *chan bool) *producer {
@@ -76,14 +75,8 @@ func (c *consumer) consume(n int) {
 	for i := 0; i < n; i++ {
 		go func() {
 			defer wg.Done()
-			for {
-				select {
-				case t, ok := <-*c.taskCh:
-					if !ok {
-						return
-					}
-					c.doTask(t)
-				}
+			for t := range *c.taskCh {
+				c.doTask(t)
 			}
 		}()
 	}
