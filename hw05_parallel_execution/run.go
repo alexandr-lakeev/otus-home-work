@@ -94,7 +94,7 @@ func (c *consumer) consume(n int) {
 
 func (c *consumer) doTask(t Task) {
 	err := t()
-	if err != nil {
+	if c.errorsLimit > 0 && err != nil {
 		c.mu.Lock()
 		c.errorsCount++
 		if c.errorsCount == c.errorsLimit {
