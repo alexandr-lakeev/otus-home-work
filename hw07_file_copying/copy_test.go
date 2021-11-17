@@ -77,4 +77,10 @@ func TestCopy(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrOffsetExceedsFileSize)
 	})
+
+	t.Run("Unsupported file", func(t *testing.T) {
+		err := Copy("/dev/urandom", out, 0, 0)
+
+		require.ErrorIs(t, err, ErrUnsupportedFile)
+	})
 }
