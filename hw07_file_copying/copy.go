@@ -41,48 +41,39 @@ func (b *ProgressBar) Increment(inc int64) {
 }
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	fileFrom, err := os.Open(fromPath)
+	fromFile, err := os.Open(fromPath)
 	if err != nil {
 		return err
 	}
-	defer fileFrom.Close()
+	defer fromFile.Close()
 
-	statFrom, err := fileFrom.Stat()
+	fromStat, err := fromFile.Stat()
 	if err != nil {
 		return err
 	}
 
-	if !statFrom.Mode().IsRegular() {
+	if !fromStat.Mode().IsRegular() {
 		return ErrUnsupportedFile
 	}
 
-	if offset > statFrom.Size() {
+	if offset > fromStat.Size() {
 		return ErrOffsetExceedsFileSize
 	}
 
-	fileTo, err := os.Create(toPath)
+	toFile, err := os.Create(toPath)
 	if err != nil {
 		return err
 	}
-	defer fileTo.Close()
+	defer toFile.Close()
 
-	if limit == 0 {
-		limit = statFrom.Size() - offset
+	if limit == 0 || limit > fromStat.Size() {
+		limit = fromStat.Size() - offset
 	}
 
-	if limit > statFrom.Size() {
-		limit = statFrom.Size() - offset
-	}
-
-	err = doCopy(fileTo, fileFrom, limit, offset)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return doCopy(fromFile, toFile, limit, offset)
 }
 
-func doCopy(dst io.WriteSeeker, src io.ReadSeeker, limit, offset int64) error {
+func doCopy(from io.ReadSeeker, to io.WriteSeeker, limit, offset int64) error {
 	var (
 		totalCopied int64
 		batchSize   int64 = 256
@@ -92,7 +83,7 @@ func doCopy(dst io.WriteSeeker, src io.ReadSeeker, limit, offset int64) error {
 		batchSize = limit
 	}
 
-	_, err := src.Seek(offset, io.SeekStart)
+	_, err := from.Seek(offset, io.SeekStart)
 	if err != nil {
 		return err
 	}
@@ -104,7 +95,7 @@ func doCopy(dst io.WriteSeeker, src io.ReadSeeker, limit, offset int64) error {
 			batchSize = limit - totalCopied
 		}
 
-		copied, err := io.CopyN(dst, src, batchSize)
+		copied, err := io.CopyN(to, from, batchSize)
 		if err != nil {
 			if errors.Is(io.EOF, err) {
 				break
