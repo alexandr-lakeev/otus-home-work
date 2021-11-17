@@ -14,7 +14,6 @@ var (
 )
 
 type ProgressBar struct {
-	template string
 	writer   io.Writer
 	total    int64
 	progress int64
@@ -103,7 +102,7 @@ func doCopy(dst io.WriteSeeker, src io.ReadSeeker, limit, offset int64) error {
 
 		copied, err := io.CopyN(dst, src, batchSize)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(io.EOF, err) {
 				break
 			}
 			return err

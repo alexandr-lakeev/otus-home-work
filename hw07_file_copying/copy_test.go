@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testData string = `Go
+//nolint
+var testData = `Go
 Documents
 Packages
 The Project
@@ -36,12 +37,12 @@ func TestCopy(t *testing.T) {
 	input := tmp + "/input.txt"
 	out := tmp + "/out.txt"
 
-	err := os.WriteFile(input, []byte(testData), 775)
+	err := os.WriteFile(input, []byte(testData), 0775)
 	require.NoError(t, err)
 	defer os.Remove(input)
 
 	t.Run("Copy", func(t *testing.T) {
-		var copyParams = []struct {
+		copyParams := []struct {
 			name     string
 			offset   int64
 			limit    int64
