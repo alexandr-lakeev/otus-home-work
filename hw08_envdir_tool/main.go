@@ -16,11 +16,11 @@ func main() {
 	}
 
 	dir, args := args[1], args[2:]
-	envs, err := ReadDir(dir)
 
+	env, err := ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	os.Exit(RunCmd(args, envs))
+	os.Exit(RunCmd(args, env))
 }
