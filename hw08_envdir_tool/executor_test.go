@@ -27,4 +27,32 @@ func TestRunCmd(t *testing.T) {
 
 		require.Equal(t, 1, returnCode)
 	})
+
+	t.Run("Environment", func(t *testing.T) {
+		fakeStdoutPath := "/tmp/stdout"
+		fakeStdout, _ := os.Create(fakeStdoutPath)
+
+		os.Stdout = fakeStdout
+
+		env := Environment{
+			"FOO": EnvValue{
+				Value:      "foo",
+				NeedRemove: false,
+			},
+			"BAR": EnvValue{
+				Value:      "bar",
+				NeedRemove: false,
+			},
+		}
+
+		RunCmd([]string{"printenv", "FOO", "BAR"}, env)
+
+		data, err := os.ReadFile(fakeStdoutPath)
+
+		require.NoError(t, err)
+
+		os.Remove(fakeStdoutPath)
+
+		require.Equal(t, "foo\nbar\n", string(data))
+	})
 }
