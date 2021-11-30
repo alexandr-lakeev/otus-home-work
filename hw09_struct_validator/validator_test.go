@@ -49,7 +49,7 @@ type (
 	}
 
 	UnknownValidator struct {
-		Field string `validate:"unkown:123"`
+		Field string `validate:"unknown:123"`
 	}
 )
 
