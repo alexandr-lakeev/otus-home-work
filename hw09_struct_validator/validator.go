@@ -10,18 +10,20 @@ import (
 )
 
 const (
-	LenValidator    = "len"
-	InValidator     = "in"
-	MinValidator    = "min"
-	MaxValidator    = "max"
-	RegexpValidator = "regexp"
-	NestedValidator = "nested"
+	LenValidator     = "len"
+	InValidator      = "in"
+	MinValidator     = "min"
+	MaxValidator     = "max"
+	RegexpValidator  = "regexp"
+	NestedValidator  = "nested"
+	RequireValidator = "require"
 )
 
 var (
 	ErrNotStruct        = errors.New("expected a struct")
 	ErrUnknownValidator = errors.New("unknown validator")
 	ErrRegexpNotMatched = errors.New("not matched regexp")
+	ErrRequire          = errors.New("can't be empty")
 )
 
 type (
@@ -36,7 +38,7 @@ type (
 )
 
 func (v ValidationErrors) Error() string {
-	errStr := "Validation error:\n"
+	errStr := "Validation errors:\n"
 	for _, err := range v {
 		if err.Err == nil {
 			continue
@@ -53,7 +55,7 @@ func Validate(v interface{}) error {
 }
 
 func validateStruct(rootFieldName string, v interface{}) error {
-	var resultErrors ValidationErrors
+	var resultErrors []ValidationError
 
 	refVal := reflect.ValueOf(v)
 	if refVal.Kind() != reflect.Struct {
@@ -62,14 +64,13 @@ func validateStruct(rootFieldName string, v interface{}) error {
 
 	fieldsCount := refVal.Type().NumField()
 
-	for i := 0; i < fieldsCount; i++ {
-		if rootFieldName != "" {
-			rootFieldName += "."
-		}
+	if rootFieldName != "" {
+		rootFieldName += "."
+	}
 
+	for i := 0; i < fieldsCount; i++ {
 		if err := validateField(rootFieldName, refVal, i); err != nil {
 			var fieldValidationErrors ValidationErrors
-
 			if errors.As(err, &fieldValidationErrors) {
 				resultErrors = append(resultErrors, fieldValidationErrors...)
 			} else {
@@ -78,7 +79,11 @@ func validateStruct(rootFieldName string, v interface{}) error {
 		}
 	}
 
-	return resultErrors
+	if len(resultErrors) == 0 {
+		return nil
+	}
+
+	return ValidationErrors(resultErrors)
 }
 
 func validateField(rootFieldName string, refVal reflect.Value, num int) error {
@@ -128,7 +133,7 @@ func validateField(rootFieldName string, refVal reflect.Value, num int) error {
 }
 
 func validateString(field, value string, validators Validators) error {
-	var validationErrors ValidationErrors
+	var validationErrors []ValidationError
 
 	for name, validator := range validators {
 		switch name {
@@ -173,16 +178,27 @@ func validateString(field, value string, validators Validators) error {
 					Err:   ErrRegexpNotMatched,
 				})
 			}
+		case RequireValidator:
+			if value == "" {
+				validationErrors = append(validationErrors, ValidationError{
+					Field: field,
+					Err:   ErrRequire,
+				})
+			}
 		default:
 			return ErrUnknownValidator
 		}
 	}
 
-	return validationErrors
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	return ValidationErrors(validationErrors)
 }
 
 func validateInt(field string, value int, validators Validators) error {
-	var validationErrors ValidationErrors
+	var validationErrors []ValidationError
 
 	for name, validator := range validators {
 		switch name {
@@ -237,11 +253,15 @@ func validateInt(field string, value int, validators Validators) error {
 		}
 	}
 
-	return validationErrors
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	return ValidationErrors(validationErrors)
 }
 
 func validateIntSlice(field string, slice []int, validators Validators) error {
-	var validationErrors ValidationErrors
+	var validationErrors []ValidationError
 
 	for key, value := range slice {
 		if err := validateInt(fmt.Sprintf("%s[%d]", field, key), value, validators); err != nil {
@@ -255,25 +275,33 @@ func validateIntSlice(field string, slice []int, validators Validators) error {
 		}
 	}
 
-	return validationErrors
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	return ValidationErrors(validationErrors)
 }
 
 func validateStringSlice(field string, slice []string, validators Validators) error {
-	var validationErrors ValidationErrors
+	var validationErrors []ValidationError
 
 	for key, value := range slice {
 		if err := validateString(fmt.Sprintf("%s[%d]", field, key), value, validators); err != nil {
-			var validationError ValidationError
+			var validationError ValidationErrors
 
-			if errors.As(err, &validationErrors) {
-				validationErrors = append(validationErrors, validationError)
+			if errors.As(err, &validationError) {
+				validationErrors = append(validationErrors, validationError...)
 			} else {
 				return err
 			}
 		}
 	}
 
-	return validationErrors
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	return ValidationErrors(validationErrors)
 }
 
 func tagToValidators(tag string) Validators {
