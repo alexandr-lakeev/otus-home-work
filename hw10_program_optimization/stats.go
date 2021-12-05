@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"io"
 	"strings"
-
-	json "github.com/json-iterator/go"
 )
 
 type User struct {
@@ -20,17 +18,33 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	domain = "." + domain
 	scanner := bufio.NewScanner(r)
 
-	user := &User{}
+	var sb strings.Builder
+
 	for scanner.Scan() {
-		*user = User{}
-		if err := json.Unmarshal([]byte(scanner.Text()), user); err != nil {
-			return nil, err
+		line := scanner.Text()
+
+		collect := false
+		for _, r := range line {
+			if r == '@' {
+				collect = true
+				continue
+			}
+
+			if collect {
+				if r == '"' {
+					break
+				} else {
+					sb.WriteRune(r)
+				}
+			}
 		}
 
-		if strings.HasSuffix(user.Email, domain) {
-			key := strings.ToLower(strings.Split(user.Email, "@")[1])
+		if strings.HasSuffix(sb.String(), domain) {
+			key := strings.ToLower(sb.String())
 			result[key]++
 		}
+
+		sb.Reset()
 	}
 
 	return result, nil
