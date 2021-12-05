@@ -30,8 +30,17 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 func getDomainFromLine(line string) string {
 	var sb strings.Builder
 
+	startIndex := strings.Index(line, "\"Email\":\"")
+	if startIndex == -1 {
+		return ""
+	}
+
 	collect := false
-	for _, r := range line {
+	for n, r := range line {
+		if n < startIndex {
+			continue
+		}
+
 		if r == '@' {
 			collect = true
 			continue
