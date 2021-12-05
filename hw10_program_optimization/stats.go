@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-type User struct {
-	Email string
-}
-
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
@@ -18,34 +14,37 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	domain = "." + domain
 	scanner := bufio.NewScanner(r)
 
-	var sb strings.Builder
-
 	for scanner.Scan() {
 		line := scanner.Text()
+		userDomain := getDomainFromLine(line)
 
-		collect := false
-		for _, r := range line {
-			if r == '@' {
-				collect = true
-				continue
-			}
-
-			if collect {
-				if r == '"' {
-					break
-				} else {
-					sb.WriteRune(r)
-				}
-			}
-		}
-
-		if strings.HasSuffix(sb.String(), domain) {
-			key := strings.ToLower(sb.String())
+		if strings.HasSuffix(userDomain, domain) {
+			key := strings.ToLower(userDomain)
 			result[key]++
 		}
-
-		sb.Reset()
 	}
 
 	return result, nil
+}
+
+func getDomainFromLine(line string) string {
+	var sb strings.Builder
+
+	collect := false
+	for _, r := range line {
+		if r == '@' {
+			collect = true
+			continue
+		}
+
+		if collect {
+			if r == '"' {
+				break
+			} else {
+				sb.WriteRune(r)
+			}
+		}
+	}
+
+	return sb.String()
 }
