@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net"
@@ -23,8 +21,6 @@ type Telnet struct {
 	in      io.ReadCloser
 	out     io.Writer
 	conn    net.Conn
-	ctx     context.Context
-	cancel  context.CancelFunc
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
@@ -39,10 +35,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 func (t *Telnet) Connect() error {
 	var err error
 
-	dialer := &net.Dialer{}
-
-	t.ctx, t.cancel = context.WithTimeout(context.Background(), t.timeout)
-	t.conn, err = dialer.DialContext(t.ctx, "tcp", t.address)
+	t.conn, err = net.DialTimeout("tcp", t.address, t.timeout)
 	if err != nil {
 		return err
 	}
@@ -53,50 +46,43 @@ func (t *Telnet) Connect() error {
 }
 
 func (t *Telnet) Close() error {
-	t.cancel()
 	return t.conn.Close()
 }
 
 func (t *Telnet) Send() error {
-	scanner := bufio.NewScanner(t.in)
-OUTER:
+	buffer := make([]byte, 1024)
 	for {
-		select {
-		case <-t.ctx.Done():
-			break OUTER
-		default:
-			if !scanner.Scan() {
-				os.Stderr.Write([]byte("...EOF\n"))
-				break OUTER
+		n, err := t.in.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				return nil
 			}
-			_, err := t.conn.Write([]byte(scanner.Text() + "\n"))
-			if err != nil {
-				return err
-			}
+			return err
+		}
+
+		n, err = t.conn.Write([]byte(buffer[:n]))
+		if err != nil {
+			return err
 		}
 	}
-	t.Close()
-	return nil
 }
 
 func (t *Telnet) Receive() error {
-	scanner := bufio.NewScanner(t.conn)
-OUTER:
+	buffer := make([]byte, 1024)
 	for {
-		select {
-		case <-t.ctx.Done():
-			break OUTER
-		default:
-			if !scanner.Scan() {
+		n, err := t.conn.Read(buffer)
+		if err != nil {
+			t.in.Close()
+			if err == io.EOF {
 				os.Stderr.Write([]byte("...Connection was closed by peer\n"))
-				break OUTER
+				return nil
 			}
-			_, err := t.out.Write([]byte(scanner.Text() + "\n"))
-			if err != nil {
-				return err
-			}
+			return err
+		}
+
+		n, err = t.out.Write([]byte(string(buffer[:n])))
+		if err != nil {
+			return err
 		}
 	}
-	t.Close()
-	return nil
 }

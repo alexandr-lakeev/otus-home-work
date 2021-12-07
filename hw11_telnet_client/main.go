@@ -1,18 +1,34 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/jessevdk/go-flags"
 )
 
-func main() {
-	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+var opts struct {
+	Timeout string `long:"timeout" description:"Client timeout"`
+}
 
-	telent := NewTelnetClient("127.0.0.1:4242", 120*time.Second, os.Stdin, os.Stdout)
+func main() {
+	args, err := flags.ParseArgs(&opts, os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	address := net.JoinHostPort(args[0], args[1])
+	timeout, err := time.ParseDuration(opts.Timeout)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	telent := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
 	if err := telent.Connect(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	defer telent.Close()
 
