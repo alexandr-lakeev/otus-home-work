@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -54,13 +55,13 @@ func (t *Telnet) Send() error {
 	for {
 		n, err := t.in.Read(buffer)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 			return err
 		}
 
-		n, err = t.conn.Write([]byte(buffer[:n]))
+		_, err = t.conn.Write(buffer[:n])
 		if err != nil {
 			return err
 		}
@@ -73,14 +74,15 @@ func (t *Telnet) Receive() error {
 		n, err := t.conn.Read(buffer)
 		if err != nil {
 			t.in.Close()
-			if err == io.EOF {
+
+			if errors.Is(err, io.EOF) {
 				os.Stderr.Write([]byte("...Connection was closed by peer\n"))
 				return nil
 			}
 			return err
 		}
 
-		n, err = t.out.Write([]byte(string(buffer[:n])))
+		_, err = t.out.Write(buffer[:n])
 		if err != nil {
 			return err
 		}
