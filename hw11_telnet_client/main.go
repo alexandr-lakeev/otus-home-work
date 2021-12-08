@@ -1,49 +1,39 @@
 package main
 
 import (
+	"context"
+	"flag"
 	"log"
 	"net"
 	"os"
-	"sync"
-	"time"
-
-	"github.com/jessevdk/go-flags"
+	"os/signal"
+	"syscall"
 )
 
-var opts struct {
-	Timeout string `long:"timeout" description:"Client timeout"`
-}
-
 func main() {
-	args, err := flags.ParseArgs(&opts, os.Args[1:])
-	if err != nil {
-		log.Fatal(err)
-	}
+	timeout := flag.Duration("timeout", 0, "Client timeout")
+	flag.Parse()
 
-	address := net.JoinHostPort(args[0], args[1])
-	timeout, err := time.ParseDuration(opts.Timeout)
-	if err != nil {
-		log.Fatal(err)
-	}
+	address := net.JoinHostPort(flag.Arg(0), flag.Arg(1))
+	telent := NewTelnetClient(address, *timeout, os.Stdin, os.Stdout)
 
-	telent := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
 	if err := telent.Connect(); err != nil {
 		log.Fatal(err)
 	}
 	defer telent.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(2)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
+	defer cancel()
 
 	go func() {
-		defer wg.Done()
+		defer cancel()
 		telent.Receive()
 	}()
 
 	go func() {
-		defer wg.Done()
+		defer cancel()
 		telent.Send()
 	}()
 
-	wg.Wait()
+	<-ctx.Done()
 }

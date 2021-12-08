@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -42,49 +41,32 @@ func (t *Telnet) Connect() error {
 	}
 
 	os.Stderr.Write([]byte(fmt.Sprintf("...Connected to %s\n", t.address)))
-
 	return nil
 }
 
 func (t *Telnet) Close() error {
-	return t.conn.Close()
+	if t.conn != nil {
+		return t.conn.Close()
+	}
+	return nil
 }
 
 func (t *Telnet) Send() error {
-	buffer := make([]byte, 1024)
-	for {
-		n, err := t.in.Read(buffer)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return nil
-			}
-			return err
-		}
+	if _, err := io.Copy(t.conn, t.in); err != nil {
+		os.Stderr.Write([]byte(err.Error()))
 
-		_, err = t.conn.Write(buffer[:n])
-		if err != nil {
-			return err
-		}
+		return err
 	}
+
+	os.Stderr.Write([]byte("...EOF"))
+	return nil
 }
 
 func (t *Telnet) Receive() error {
-	buffer := make([]byte, 1024)
-	for {
-		n, err := t.conn.Read(buffer)
-		if err != nil {
-			t.in.Close()
-
-			if errors.Is(err, io.EOF) {
-				os.Stderr.Write([]byte("...Connection was closed by peer\n"))
-				return nil
-			}
-			return err
-		}
-
-		_, err = t.out.Write(buffer[:n])
-		if err != nil {
-			return err
-		}
+	if _, err := io.Copy(t.out, t.conn); err != nil {
+		return err
 	}
+
+	os.Stderr.Write([]byte("...Connection was closed by peer"))
+	return nil
 }
