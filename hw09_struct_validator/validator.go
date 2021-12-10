@@ -38,16 +38,18 @@ type (
 )
 
 func (v ValidationErrors) Error() string {
-	errStr := "Validation errors:\n"
+	builder := strings.Builder{}
+	builder.WriteString("Validation errors:\n")
+
 	for _, err := range v {
 		if err.Err == nil {
 			continue
 		}
 
-		errStr += err.Field + ": " + err.Err.Error() + "\n"
+		builder.WriteString(err.Field + ": " + err.Err.Error() + "\n")
 	}
 
-	return errStr
+	return builder.String()
 }
 
 func Validate(v interface{}) error {
@@ -71,11 +73,11 @@ func validateStruct(rootFieldName string, v interface{}) error {
 	for i := 0; i < fieldsCount; i++ {
 		if err := validateField(rootFieldName, refVal, i); err != nil {
 			var fieldValidationErrors ValidationErrors
-			if errors.As(err, &fieldValidationErrors) {
-				resultErrors = append(resultErrors, fieldValidationErrors...)
-			} else {
+			if !errors.As(err, &fieldValidationErrors) {
 				return err
 			}
+
+			resultErrors = append(resultErrors, fieldValidationErrors...)
 		}
 	}
 
@@ -111,11 +113,7 @@ func validateField(rootFieldName string, refVal reflect.Value, num int) error {
 		return validateStruct(fullFieldName, value.Interface())
 	case reflect.String:
 		return validateString(fullFieldName, value.String(), validators)
-	case reflect.Int:
-		return validateInt(fullFieldName, int(value.Int()), validators)
-	case reflect.Int32:
-		return validateInt(fullFieldName, int(value.Int()), validators)
-	case reflect.Int64:
+	case reflect.Int, reflect.Int32, reflect.Int64:
 		return validateInt(fullFieldName, int(value.Int()), validators)
 	case reflect.Slice:
 		intSlice, ok := value.Interface().([]int)
@@ -267,11 +265,11 @@ func validateIntSlice(field string, slice []int, validators Validators) error {
 		if err := validateInt(fmt.Sprintf("%s[%d]", field, key), value, validators); err != nil {
 			var validationError ValidationErrors
 
-			if errors.As(err, &validationError) {
-				validationErrors = append(validationErrors, validationError...)
-			} else {
+			if !errors.As(err, &validationError) {
 				return err
 			}
+
+			validationErrors = append(validationErrors, validationError...)
 		}
 	}
 
@@ -290,10 +288,10 @@ func validateStringSlice(field string, slice []string, validators Validators) er
 			var validationError ValidationErrors
 
 			if errors.As(err, &validationError) {
-				validationErrors = append(validationErrors, validationError...)
-			} else {
 				return err
 			}
+
+			validationErrors = append(validationErrors, validationError...)
 		}
 	}
 
