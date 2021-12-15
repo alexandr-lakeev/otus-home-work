@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
 type App struct { // TODO
@@ -10,10 +12,7 @@ type App struct { // TODO
 type Logger interface { // TODO
 }
 
-type Storage interface { // TODO
-}
-
-func New(logger Logger, storage Storage) *App {
+func New(logger Logger, storage storage.Storage) *App {
 	return &App{}
 }
 

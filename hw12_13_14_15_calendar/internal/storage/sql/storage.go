@@ -1,8 +1,15 @@
 package sqlstorage
 
-import "context"
+import (
+	"context"
+	"database/sql"
+	"time"
 
-type Storage struct { // TODO
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
+)
+
+type Storage struct {
+	conn sql.Conn
 }
 
 func New() *Storage {
@@ -10,11 +17,21 @@ func New() *Storage {
 }
 
 func (s *Storage) Connect(ctx context.Context) error {
-	// TODO
 	return nil
 }
 
 func (s *Storage) Close(ctx context.Context) error {
-	// TODO
 	return nil
+}
+
+func (*Storage) Get(id string) (*models.Event, error) {
+	return &models.Event{}, nil
+}
+
+func (*Storage) Save(event *models.Event) error {
+	return nil
+}
+
+func (*Storage) GetList(from, to time.Time) ([]models.Event, error) {
+	return []models.Event{}, nil
 }
