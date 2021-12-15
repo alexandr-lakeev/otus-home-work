@@ -14,7 +14,11 @@ type LoggerConf struct {
 }
 
 func NewConfig() Config {
-	return Config{}
+	return Config{
+		Logger: LoggerConf{
+			Level: "INFO", // TODO from file
+		},
+	}
 }
 
 // TODO

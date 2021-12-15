@@ -1,7 +1,12 @@
 package logger
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestLogger(t *testing.T) {
-	// TODO
+	logg, err := New("INFO")
+
+	fmt.Println(logg, err)
 }
