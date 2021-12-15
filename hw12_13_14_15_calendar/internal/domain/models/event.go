@@ -12,5 +12,5 @@ type Event struct {
 	Date        time.Time
 	Duration    time.Duration
 	Description string
-	UserId      uuid.UUID
+	UserID      uuid.UUID
 }

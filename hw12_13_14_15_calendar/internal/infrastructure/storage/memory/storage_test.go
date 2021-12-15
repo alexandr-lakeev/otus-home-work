@@ -14,21 +14,21 @@ func TestStorage(t *testing.T) {
 	t.Run("save and get", func(t *testing.T) {
 		s := New()
 
-		eventId := uuid.New()
-		userId := uuid.New()
+		eventID := uuid.New()
+		userID := uuid.New()
 
 		event := &models.Event{
-			ID:          eventId,
+			ID:          eventID,
 			Title:       "New Event",
 			Date:        time.Now(),
 			Duration:    2 * time.Hour,
 			Description: "Some awesome event",
-			UserId:      userId,
+			UserID:      userID,
 		}
 
 		require.NoError(t, s.Save(event))
 
-		eventFromStorage, err := s.Get(eventId)
+		eventFromStorage, err := s.Get(eventID)
 
 		require.NoError(t, err)
 		require.Equal(t, eventFromStorage, event)
@@ -36,10 +36,10 @@ func TestStorage(t *testing.T) {
 
 	t.Run("not found", func(t *testing.T) {
 		s := New()
-		eventId := uuid.New()
+		eventID := uuid.New()
 
 		event := &models.Event{
-			ID: eventId,
+			ID: eventID,
 		}
 
 		require.NoError(t, s.Save(event))

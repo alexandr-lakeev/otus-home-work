@@ -2,14 +2,13 @@ package sqlstorage
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
 )
 
 type Storage struct {
-	conn sql.Conn
+	// conn sql.Conn
 }
 
 func New() *Storage {
