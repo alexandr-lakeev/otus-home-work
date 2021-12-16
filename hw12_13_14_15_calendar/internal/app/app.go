@@ -9,7 +9,12 @@ import (
 type App struct { // TODO
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Debug(msg string)
+	Info(msg string)
+	Warning(msg string)
+	Error(msg string)
+	Panic(msg string)
 }
 
 func New(logger Logger, storage storage.Storage) *App {

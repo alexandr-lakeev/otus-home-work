@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -46,6 +46,34 @@ func TestStorage(t *testing.T) {
 
 		_, err := s.Get(uuid.New())
 
-		require.ErrorIs(t, storage.ErrEventNotFound, err)
+		require.ErrorIs(t, domain.ErrEventNotFound, err)
+	})
+
+	t.Run("date busy", func(t *testing.T) {
+		s := New()
+
+		userID := uuid.New()
+		date := time.Now()
+
+		event1 := &models.Event{
+			ID:          uuid.New(),
+			Title:       "New Event 1",
+			Date:        date,
+			Duration:    2 * time.Hour,
+			Description: "Some awesome event",
+			UserID:      userID,
+		}
+
+		event2 := &models.Event{
+			ID:          uuid.New(),
+			Title:       "New Event 2",
+			Date:        date,
+			Duration:    2 * time.Hour,
+			Description: "Some awesome event",
+			UserID:      userID,
+		}
+
+		require.NoError(t, s.Save(event1))
+		require.ErrorIs(t, domain.ErrDateBusy, s.Save(event2))
 	})
 }
