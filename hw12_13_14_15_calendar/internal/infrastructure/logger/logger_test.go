@@ -50,6 +50,8 @@ func TestLogger(t *testing.T) {
 				})
 
 				log, err := os.Open(stdout)
+				require.NoError(t, err)
+
 				scanner := bufio.NewScanner(log)
 				n := tc.messageKey
 				for scanner.Scan() {

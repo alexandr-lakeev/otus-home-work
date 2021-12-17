@@ -44,7 +44,7 @@ func (l Logger) Panic(msg string) {
 }
 
 func initLogger(level string) (*zap.Logger, error) {
-	var levelMap map[string]zapcore.Level = map[string]zapcore.Level{
+	levelMap := map[string]zapcore.Level{
 		"DEBUG":   zap.DebugLevel,
 		"INFO":    zap.InfoLevel,
 		"WARNING": zap.WarnLevel,
@@ -64,7 +64,7 @@ func initLogger(level string) (*zap.Logger, error) {
 
 	zapLevel, ok := levelMap[level]
 	if !ok {
-		return nil, fmt.Errorf("Wrong log level: %s", level)
+		return nil, fmt.Errorf("wrong log level: %s", level)
 	}
 
 	atom.SetLevel(zapLevel)
