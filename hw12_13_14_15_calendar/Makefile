@@ -19,6 +19,12 @@ build-img:
 run-img: build-img
 	docker run $(DOCKER_IMG)
 
+create-network:
+	docker network create calendar || true
+
+run-compose: create-network
+	docker-compose -f ./deployments/docker-compose.yaml up
+
 version: build
 	$(BIN) version
 

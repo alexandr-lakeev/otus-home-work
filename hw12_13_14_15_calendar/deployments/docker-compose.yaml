@@ -1,1 +1,44 @@
 version: "3"
+
+services:
+  backend:
+    image: calendar:develop
+    ports:
+      - "8080"
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+    networks:
+      - calendar
+
+  db:
+    image: postgres:11.14
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "calendar"
+    ports:
+      - "5432"
+    volumes:
+      - /opt/docker/postgres/calendar/calendar_db:/var/lib/postgresql
+    networks:
+      - calendar
+
+  migrate:
+    image: migrate/migrate:v4.15.0
+    entrypoint: ["sh", "/migrate-entrypoint.sh"]
+    volumes:
+      - ../deployments/migrate-entrypoint.sh:/migrate-entrypoint.sh
+      - ../migrations:/migrations:rw
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+    networks:
+      - calendar
+
+networks:
+  calendar:
+    external:
+      name: calendar
