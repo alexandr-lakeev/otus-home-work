@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal"
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/usecase"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
 	internalhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/server/http"
 	sqlstorage "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage/sql"
@@ -19,7 +19,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/calendar/config.dev.toml", "Path to configuration file")
 }
 
 func main() {
@@ -30,7 +30,11 @@ func main() {
 		return
 	}
 
-	config := internal.NewConfig()
+	config, err := internal.NewConfig(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	logg, err := logger.New(config.Logger.Level)
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +49,7 @@ func main() {
 	}
 	defer storage.Close(ctx)
 
-	calendar := app.New(storage, logg)
+	calendar := usecase.New(storage, logg)
 	server := internalhttp.NewServer(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
