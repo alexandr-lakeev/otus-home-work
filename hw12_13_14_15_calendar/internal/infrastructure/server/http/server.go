@@ -2,13 +2,17 @@ package internalhttp
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 )
 
 type Server struct {
-	logg    Logger
+	server  *http.Server
 	usecase app.UseCase
+	logg    Logger
 }
 
 type Logger interface {
@@ -19,22 +23,33 @@ type Logger interface {
 	Panic(msg string)
 }
 
-func NewServer(logger Logger, usecase app.UseCase) *Server {
+func NewServer(cfg config.ServerConf, usecase app.UseCase, logger Logger) *Server {
 	return &Server{
+		server: &http.Server{
+			Handler:      &dummyHandler{},
+			Addr:         cfg.BindAddress,
+			WriteTimeout: cfg.WriteTimeout,
+			ReadTimeout:  cfg.ReadTimeout,
+			IdleTimeout:  cfg.IdleTimeout,
+		},
 		logg:    logger,
 		usecase: usecase,
 	}
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	// TODO
-	<-ctx.Done()
-	return nil
+	s.logg.Info(fmt.Sprintf("server is starting on %s", s.server.Addr))
+
+	return s.server.ListenAndServe()
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	// TODO
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
-// TODO
+type dummyHandler struct{}
+
+func (h *dummyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte("OK"))
+}

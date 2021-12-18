@@ -19,9 +19,10 @@ type Config struct {
 }
 
 type ServerConf struct {
-	BindAddress string        `config:"bind_address,require"`
-	ReadTimeout time.Duration `config:"read_timeout"`
-	WriteTimeot time.Duration `config:"write_timeout"`
+	BindAddress  string        `config:"bind_address,require"`
+	ReadTimeout  time.Duration `config:"read_timeout"`
+	WriteTimeout time.Duration `config:"write_timeout"`
+	IdleTimeout  time.Duration `config:"idle_timeout"`
 }
 
 type LoggerConf struct {
@@ -30,11 +31,14 @@ type LoggerConf struct {
 
 type StorageConf struct {
 	Type string `config:"type"`
-	DSN  string `config:"DSN,require"`
+	DSN  string `config:"DSN"`
 }
 
 func NewConfig(configFile string) (*Config, error) {
 	cfg := Config{
+		Server: ServerConf{
+			BindAddress: ":8080",
+		},
 		Storage: StorageConf{
 			Type: STORAGE_MEMORY,
 		},

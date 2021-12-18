@@ -54,7 +54,7 @@ func main() {
 	defer storage.Close(ctx)
 
 	calendar := usecase.New(storage, logg)
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(config.Server, calendar, logg)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
