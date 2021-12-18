@@ -6,11 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type ID = uuid.UUID
+
 type Event struct {
-	ID          uuid.UUID
+	ID          ID
+	UserID      ID
 	Title       string
 	Date        time.Time
 	Duration    time.Duration
 	Description string
-	UserID      uuid.UUID
 }

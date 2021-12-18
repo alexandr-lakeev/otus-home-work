@@ -9,6 +9,7 @@ services:
       - ../.env
     depends_on:
       - db
+      - migrate
     networks:
       - calendar
 
@@ -19,7 +20,7 @@ services:
       POSTGRES_PASSWORD: "password"
       POSTGRES_DB: "calendar"
     ports:
-      - "5432"
+      - "5432:5432"
     volumes:
       - /opt/docker/postgres/calendar/calendar_db:/var/lib/postgresql
     networks:

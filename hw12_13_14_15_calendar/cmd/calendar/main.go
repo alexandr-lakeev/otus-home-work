@@ -9,10 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
 	internalhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/server/http"
-	memorystorage "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage/memory"
+	sqlstorage "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage/sql"
 )
 
 var configFile string
@@ -29,15 +30,22 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
+	config := internal.NewConfig()
 	logg, err := logger.New(config.Logger.Level)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	ctx := context.Background()
 
+	storage := sqlstorage.New(config.DB.DSN)
+	err = storage.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storage.Close(ctx)
+
+	calendar := app.New(storage, logg)
 	server := internalhttp.NewServer(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),

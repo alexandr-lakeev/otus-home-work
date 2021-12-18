@@ -4,7 +4,8 @@ import (
 	"context"
 )
 
-type Server struct { // TODO
+type Server struct {
+	logg Logger
 }
 
 type Logger interface {
@@ -19,7 +20,9 @@ type Application interface { // TODO
 }
 
 func NewServer(logger Logger, app Application) *Server {
-	return &Server{}
+	return &Server{
+		logg: logger,
+	}
 }
 
 func (s *Server) Start(ctx context.Context) error {

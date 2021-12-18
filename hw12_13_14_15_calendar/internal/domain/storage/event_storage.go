@@ -1,14 +1,17 @@
 package storage
 
 import (
+	"context"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
-	"github.com/google/uuid"
 )
 
 type Storage interface {
-	Get(id uuid.UUID) (*models.Event, error)
-	Save(event *models.Event) error
-	GetList(from, to time.Time) ([]models.Event, error)
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
+	Get(ctx context.Context, id models.ID) (*models.Event, error)
+	Add(ctx context.Context, event *models.Event) error
+	Update(ctx context.Context, event *models.Event) error
+	GetList(ctx context.Context, from, to time.Time) ([]models.Event, error)
 }

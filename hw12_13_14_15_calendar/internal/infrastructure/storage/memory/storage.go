@@ -1,26 +1,34 @@
 package memorystorage
 
 import (
+	"context"
 	"sync"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
-	"github.com/google/uuid"
 )
 
 type Storage struct {
 	mu     sync.RWMutex
-	events map[uuid.UUID]*models.Event
+	events map[models.ID]*models.Event
 }
 
 func New() *Storage {
 	return &Storage{
-		events: make(map[uuid.UUID]*models.Event),
+		events: make(map[models.ID]*models.Event),
 	}
 }
 
-func (s *Storage) Get(id uuid.UUID) (*models.Event, error) {
+func (s *Storage) Connect(ctx context.Context) error {
+	return nil
+}
+
+func (s *Storage) Close(ctx context.Context) error {
+	return nil
+}
+
+func (s *Storage) Get(ctx context.Context, id models.ID) (*models.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -32,7 +40,11 @@ func (s *Storage) Get(id uuid.UUID) (*models.Event, error) {
 	return event, nil
 }
 
-func (s *Storage) Save(event *models.Event) error {
+func (s *Storage) Add(ctx context.Context, event *models.Event) error {
+	return s.Update(ctx, event)
+}
+
+func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -47,7 +59,7 @@ func (s *Storage) Save(event *models.Event) error {
 	return nil
 }
 
-func (s *Storage) GetList(from, to time.Time) ([]models.Event, error) {
+func (s *Storage) GetList(ctx context.Context, from, to time.Time) ([]models.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

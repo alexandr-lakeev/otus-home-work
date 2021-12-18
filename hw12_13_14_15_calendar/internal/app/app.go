@@ -6,7 +6,9 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
-type App struct { // TODO
+type App struct {
+	logg    Logger
+	storage storage.Storage
 }
 
 type Logger interface {
@@ -17,14 +19,15 @@ type Logger interface {
 	Panic(msg string)
 }
 
-func New(logger Logger, storage storage.Storage) *App {
-	return &App{}
+func New(storage storage.Storage, logger Logger) *App {
+	return &App{
+		storage: storage,
+		logg:    logger,
+	}
 }
 
 func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
 	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
 }
 
 // TODO

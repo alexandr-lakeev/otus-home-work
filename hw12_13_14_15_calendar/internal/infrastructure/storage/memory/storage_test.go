@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ func TestStorage(t *testing.T) {
 	t.Run("save and get", func(t *testing.T) {
 		s := New()
 
+		ctx := context.Background()
 		eventID := uuid.New()
 		userID := uuid.New()
 
@@ -26,9 +28,9 @@ func TestStorage(t *testing.T) {
 			UserID:      userID,
 		}
 
-		require.NoError(t, s.Save(event))
+		require.NoError(t, s.Add(ctx, event))
 
-		eventFromStorage, err := s.Get(eventID)
+		eventFromStorage, err := s.Get(ctx, eventID)
 
 		require.NoError(t, err)
 		require.Equal(t, eventFromStorage, event)
@@ -36,15 +38,17 @@ func TestStorage(t *testing.T) {
 
 	t.Run("not found", func(t *testing.T) {
 		s := New()
+
+		ctx := context.Background()
 		eventID := uuid.New()
 
 		event := &models.Event{
 			ID: eventID,
 		}
 
-		require.NoError(t, s.Save(event))
+		require.NoError(t, s.Add(ctx, event))
 
-		_, err := s.Get(uuid.New())
+		_, err := s.Get(ctx, uuid.New())
 
 		require.ErrorIs(t, domain.ErrEventNotFound, err)
 	})
@@ -52,6 +56,7 @@ func TestStorage(t *testing.T) {
 	t.Run("date busy", func(t *testing.T) {
 		s := New()
 
+		ctx := context.Background()
 		userID := uuid.New()
 		date := time.Now()
 
@@ -73,7 +78,7 @@ func TestStorage(t *testing.T) {
 			UserID:      userID,
 		}
 
-		require.NoError(t, s.Save(event1))
-		require.ErrorIs(t, domain.ErrDateBusy, s.Save(event2))
+		require.NoError(t, s.Add(ctx, event1))
+		require.ErrorIs(t, domain.ErrDateBusy, s.Add(ctx, event2))
 	})
 }
