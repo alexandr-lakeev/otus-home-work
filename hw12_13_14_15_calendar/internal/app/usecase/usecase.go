@@ -1,4 +1,4 @@
-package app
+package usecase
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
-type App struct {
+type UseCase struct {
 	logg    Logger
 	storage storage.Storage
 }
@@ -19,15 +19,13 @@ type Logger interface {
 	Panic(msg string)
 }
 
-func New(storage storage.Storage, logger Logger) *App {
-	return &App{
+func New(storage storage.Storage, logger Logger) *UseCase {
+	return &UseCase{
 		storage: storage,
 		logg:    logger,
 	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
+func (a *UseCase) CreateEvent(ctx context.Context, id, title string) error {
 	return nil
 }
-
-// TODO

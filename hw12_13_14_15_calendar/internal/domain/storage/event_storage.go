@@ -13,5 +13,5 @@ type Storage interface {
 	Get(ctx context.Context, id models.ID) (*models.Event, error)
 	Add(ctx context.Context, event *models.Event) error
 	Update(ctx context.Context, event *models.Event) error
-	GetList(ctx context.Context, from, to time.Time) ([]models.Event, error)
+	GetList(ctx context.Context, userID models.ID, from, to time.Time) ([]models.Event, error)
 }

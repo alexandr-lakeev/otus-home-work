@@ -2,10 +2,13 @@ package internalhttp
 
 import (
 	"context"
+
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
 )
 
 type Server struct {
-	logg Logger
+	logg    Logger
+	usecase app.UseCase
 }
 
 type Logger interface {
@@ -16,12 +19,10 @@ type Logger interface {
 	Panic(msg string)
 }
 
-type Application interface { // TODO
-}
-
-func NewServer(logger Logger, app Application) *Server {
+func NewServer(logger Logger, usecase app.UseCase) *Server {
 	return &Server{
-		logg: logger,
+		logg:    logger,
+		usecase: usecase,
 	}
 }
 

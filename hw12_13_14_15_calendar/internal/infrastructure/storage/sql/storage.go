@@ -83,20 +83,12 @@ func (s *Storage) Get(ctx context.Context, id uuid.UUID) (*models.Event, error) 
 		return nil, err
 	}
 
-	// Store duration in minutes
-	duration, err := time.ParseDuration(fmt.Sprintf("%dm", event.Duration))
+	domainEvent, err := dbToDomainEvent(event)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.Event{
-		ID:          event.ID,
-		UserID:      event.UserID,
-		Title:       event.Title,
-		Date:        event.Date,
-		Duration:    duration,
-		Description: event.Description,
-	}, nil
+	return &domainEvent, nil
 }
 
 func (s *Storage) Add(ctx context.Context, event *models.Event) error {
@@ -107,7 +99,7 @@ func (s *Storage) Add(ctx context.Context, event *models.Event) error {
 
 	_, err := s.db.NamedExecContext(ctx, query, map[string]interface{}{
 		"id":          event.ID.String(),
-		"userId":      event.UserID.String(),
+		"UserID":      event.UserID.String(),
 		"title":       event.Title,
 		"date":        event.Date,
 		"duration":    event.Duration.Minutes(),
@@ -128,12 +120,12 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 			updated_at = NOW()
 		WHERE
 			id = id AND
-			user_id = :userId
+			user_id = :userID
 	`
 
 	_, err := s.db.NamedExecContext(ctx, query, map[string]interface{}{
 		"id":          event.ID.String(),
-		"userId":      event.UserID.String(),
+		"userID":      event.UserID.String(),
 		"title":       event.Title,
 		"date":        event.Date,
 		"duration":    event.Duration.Minutes(),
@@ -143,6 +135,70 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 	return err
 }
 
-func (s *Storage) GetList(ctx context.Context, from, to time.Time) ([]models.Event, error) {
-	return []models.Event{}, nil
+func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.Time) ([]models.Event, error) {
+	query := `
+		SELECT 
+			id, user_id, title, date, duration, description
+		FROM 
+			events 
+		WHERE 
+			user_id = :userID
+			AND date BETWEEN :from AND :to
+		ORDER BY date
+	`
+
+	rows, err := s.db.NamedQueryContext(ctx, query, map[string]interface{}{
+		"userID": userID,
+		"from":   from.Format("2006-01-02"),
+		"to":     to.Format("2006-01-02"),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, domain.ErrEventNotFound
+	}
+
+	var events []models.Event
+
+	for rows.Next() {
+		var event dbEvent
+
+		err := rows.StructScan(&event)
+		if err != nil {
+			return nil, err
+		}
+
+		domainEvent, err := dbToDomainEvent(event)
+		if err != nil {
+			return nil, err
+		}
+
+		events = append(events, domainEvent)
+	}
+
+	err = rows.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+func dbToDomainEvent(event dbEvent) (models.Event, error) {
+	duration, err := time.ParseDuration(fmt.Sprintf("%dm", event.Duration))
+	if err != nil {
+		return models.Event{}, err
+	}
+
+	return models.Event{
+		ID:          event.ID,
+		UserID:      event.UserID,
+		Title:       event.Title,
+		Date:        event.Date,
+		Duration:    duration,
+		Description: event.Description,
+	}, nil
 }

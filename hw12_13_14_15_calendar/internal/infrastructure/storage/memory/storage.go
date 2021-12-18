@@ -59,7 +59,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 	return nil
 }
 
-func (s *Storage) GetList(ctx context.Context, from, to time.Time) ([]models.Event, error) {
+func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.Time) ([]models.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
