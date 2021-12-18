@@ -1,10 +1,7 @@
-package internal
+package config
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/heetch/confita"
@@ -12,10 +9,13 @@ import (
 	"github.com/heetch/confita/backend/file"
 )
 
+const STORAGE_MEMORY = "memory"
+const STORAGE_SQL = "sql"
+
 type Config struct {
-	Server ServerConf
-	Logger LoggerConf
-	DB     DBConf
+	Server  ServerConf
+	Logger  LoggerConf
+	Storage StorageConf
 }
 
 type ServerConf struct {
@@ -28,18 +28,16 @@ type LoggerConf struct {
 	Level string `config:"level"`
 }
 
-type DBConf struct {
-	DSN string `config:"DSN,require"`
+type StorageConf struct {
+	Type string `config:"type"`
+	DSN  string `config:"DSN,require"`
 }
 
 func NewConfig(configFile string) (*Config, error) {
-	f, _ := os.Open(configFile)
-	content, _ := ioutil.ReadAll(f)
-	fmt.Println(string(content))
-
 	cfg := Config{
-		Server: ServerConf{},
-		DB:     DBConf{},
+		Storage: StorageConf{
+			Type: STORAGE_MEMORY,
+		},
 		Logger: LoggerConf{
 			Level: "INFO",
 		},

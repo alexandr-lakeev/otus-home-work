@@ -5,3 +5,6 @@ level = "INFO"
 bind_address = ":8080"
 read_timeout = "5s"
 write_timeout = "5s"
+
+[storage]
+type = "sql"
