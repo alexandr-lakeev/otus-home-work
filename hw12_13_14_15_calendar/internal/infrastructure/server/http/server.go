@@ -12,21 +12,13 @@ import (
 type Server struct {
 	server  *http.Server
 	usecase app.UseCase
-	logg    Logger
+	logg    app.Logger
 }
 
-type Logger interface {
-	Debug(msg string)
-	Info(msg string)
-	Warning(msg string)
-	Error(msg string)
-	Panic(msg string)
-}
-
-func NewServer(cfg config.ServerConf, usecase app.UseCase, logger Logger) *Server {
+func NewServer(cfg config.ServerConf, usecase app.UseCase, logger app.Logger) *Server {
 	return &Server{
 		server: &http.Server{
-			Handler:      &dummyHandler{},
+			Handler:      newLoggingMiddleware(logger)(&dummyHandler{}),
 			Addr:         cfg.BindAddress,
 			WriteTimeout: cfg.WriteTimeout,
 			ReadTimeout:  cfg.ReadTimeout,
