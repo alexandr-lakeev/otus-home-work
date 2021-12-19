@@ -10,14 +10,14 @@ import (
 )
 
 func ResolveStorage(cfg config.StorageConf) (storage.Storage, error) {
-	if cfg.Type == config.STORAGE_MEMORY {
+	if cfg.Type == config.MemoryStorage {
 		return memorystorage.New(), nil
 	}
 
 	switch cfg.Type {
-	case config.STORAGE_MEMORY:
+	case config.MemoryStorage:
 		return memorystorage.New(), nil
-	case config.STORAGE_SQL:
+	case config.SQLStorage:
 		return sqlstorage.New(cfg.DSN), nil
 	default:
 		return nil, fmt.Errorf("wrong storage type: %s", cfg.Type)

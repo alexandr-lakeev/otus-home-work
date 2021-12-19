@@ -9,7 +9,7 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
 	"github.com/google/uuid"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v4/stdlib" // nolint
 	"github.com/jmoiron/sqlx"
 )
 
@@ -42,7 +42,7 @@ func (s *Storage) Connect(ctx context.Context) (err error) {
 
 	s.conn, err = s.db.Conn(ctx)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return s.db.PingContext(ctx)
@@ -77,11 +77,7 @@ func (s *Storage) Get(ctx context.Context, id uuid.UUID) (*models.Event, error) 
 	if err != nil {
 		return nil, err
 	}
-
-	err = rows.Close()
-	if err != nil {
-		return nil, err
-	}
+	defer rows.Close()
 
 	domainEvent, err := dbToDomainEvent(event)
 	if err != nil {
@@ -152,14 +148,10 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 		"from":   from.Format("2006-01-02"),
 		"to":     to.Format("2006-01-02"),
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
-	if !rows.Next() {
-		return nil, domain.ErrEventNotFound
-	}
+	defer rows.Close()
 
 	var events []models.Event
 
@@ -179,7 +171,6 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 		events = append(events, domainEvent)
 	}
 
-	err = rows.Close()
 	if err != nil {
 		return nil, err
 	}
