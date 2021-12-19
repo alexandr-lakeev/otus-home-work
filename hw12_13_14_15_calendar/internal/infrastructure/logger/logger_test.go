@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,7 +37,10 @@ func TestLogger(t *testing.T) {
 
 				os.Stdout, _ = os.Create(stdout)
 
-				logg, err := New(tc.level)
+				logg, err := New(config.LoggerConf{
+					Env:   "dev",
+					Level: tc.level,
+				})
 
 				require.NoError(t, err)
 
@@ -63,7 +67,10 @@ func TestLogger(t *testing.T) {
 	})
 
 	t.Run("Wrong debug level", func(t *testing.T) {
-		_, err := New("WRONG_LEVEL")
+		_, err := New(config.LoggerConf{
+			Env:   "dev",
+			Level: "WRONG_LEVEL",
+		})
 
 		require.Error(t, err)
 	})

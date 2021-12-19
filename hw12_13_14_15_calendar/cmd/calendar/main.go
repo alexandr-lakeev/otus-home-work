@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -35,7 +36,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logg, err := logger.New(config.Logger.Level)
+	fmt.Printf("%+v\n", config.Logger)
+
+	logg, err := logger.New(config.Logger)
 	if err != nil {
 		log.Fatal(err)
 	}

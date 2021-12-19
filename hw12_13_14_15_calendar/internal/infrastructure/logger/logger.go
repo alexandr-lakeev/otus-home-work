@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -12,8 +13,8 @@ type Logger struct {
 	logg *zap.Logger
 }
 
-func New(level string) (*Logger, error) {
-	logg, err := initLogger(level)
+func New(cfg config.LoggerConf) (*Logger, error) {
+	logg, err := initLogger(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (l Logger) Panic(msg string) {
 	l.logg.Panic(msg)
 }
 
-func initLogger(level string) (*zap.Logger, error) {
+func initLogger(cfg config.LoggerConf) (*zap.Logger, error) {
 	levelMap := map[string]zapcore.Level{
 		"DEBUG":   zap.DebugLevel,
 		"INFO":    zap.InfoLevel,
@@ -54,17 +55,25 @@ func initLogger(level string) (*zap.Logger, error) {
 
 	atom := zap.NewAtomicLevel()
 
-	encoderCfg := zap.NewDevelopmentEncoderConfig()
+	var logger *zap.Logger
 
-	logger := zap.New(zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		atom,
-	))
+	if cfg.Env == "prod" {
+		logger = zap.New(zapcore.NewCore(
+			zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+			zapcore.Lock(os.Stdout),
+			atom,
+		))
+	} else {
+		logger = zap.New(zapcore.NewCore(
+			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+			zapcore.Lock(os.Stdout),
+			atom,
+		))
+	}
 
-	zapLevel, ok := levelMap[level]
+	zapLevel, ok := levelMap[cfg.Level]
 	if !ok {
-		return nil, fmt.Errorf("wrong log level: %s", level)
+		return nil, fmt.Errorf("wrong log level: %s", cfg.Level)
 	}
 
 	atom.SetLevel(zapLevel)

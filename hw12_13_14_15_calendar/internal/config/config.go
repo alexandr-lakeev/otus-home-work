@@ -26,6 +26,7 @@ type ServerConf struct {
 }
 
 type LoggerConf struct {
+	Env   string `config:"ENV"`
 	Level string `config:"level"`
 }
 
