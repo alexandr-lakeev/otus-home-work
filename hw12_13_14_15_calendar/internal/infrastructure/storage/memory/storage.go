@@ -63,5 +63,12 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return []models.Event{}, nil
+	var result []models.Event
+	for _, e := range s.events {
+		if e.UserID == userID && e.Date.After(from) && e.Date.Before(to) {
+			result = append(result, *e)
+		}
+	}
+
+	return result, nil
 }
