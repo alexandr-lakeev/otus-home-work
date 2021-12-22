@@ -95,7 +95,7 @@ func (s *Storage) Add(ctx context.Context, event *models.Event) error {
 
 	_, err := s.db.NamedExecContext(ctx, query, map[string]interface{}{
 		"id":          event.ID.String(),
-		"UserID":      event.UserID.String(),
+		"userID":      event.UserID.String(),
 		"title":       event.Title,
 		"date":        event.Date,
 		"duration":    event.Duration.Minutes(),

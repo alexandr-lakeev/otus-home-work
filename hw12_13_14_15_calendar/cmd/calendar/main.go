@@ -38,7 +38,7 @@ func main() {
 
 	fmt.Printf("%+v\n", config.Logger)
 
-	logg, err := logger.New(config.Logger)
+	logger, err := logger.New(config.Logger)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,8 +56,8 @@ func main() {
 	}
 	defer storage.Close(ctx)
 
-	calendar := usecase.New(storage, logg)
-	server := internalhttp.NewServer(config.Server, calendar, logg)
+	calendar := usecase.New(storage, logger)
+	server := internalhttp.NewServer(config.Server, calendar, logger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -70,14 +70,14 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logger.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		logger.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

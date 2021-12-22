@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
@@ -19,6 +20,14 @@ func New(storage storage.Storage, logger app.Logger) *UseCase {
 	}
 }
 
-func (a *UseCase) CreateEvent(ctx context.Context, id, title string) error {
-	return nil
+func (u *UseCase) CreateEvent(ctx context.Context, command *app.CreateEventCommand) error {
+	// TODO check date for busy
+	return u.storage.Add(ctx, &models.Event{
+		ID:          command.ID,
+		UserID:      command.UserID,
+		Title:       command.Title,
+		Date:        command.Date,
+		Duration:    command.Duration,
+		Description: command.Description,
+	})
 }
