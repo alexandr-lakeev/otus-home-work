@@ -40,7 +40,7 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := new(request)
 
-		userID, err := h.extractUserId(r)
+		userID, err := h.extractUserID(r)
 		if err != nil {
 			makeResponseError(w, h.resolveErrorCode(err), err)
 			return
@@ -87,13 +87,13 @@ func (h *Handler) GetEvent(ctx context.Context) http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, err := h.extractUserId(r)
+		userID, err := h.extractUserID(r)
 		if err != nil {
 			makeResponseError(w, h.resolveErrorCode(err), err)
 			return
 		}
 
-		id, err := h.extractId(r)
+		id, err := h.extractID(r)
 		if err != nil {
 			makeResponseError(w, http.StatusBadRequest, err)
 			return
@@ -129,13 +129,13 @@ func (h *Handler) UpdateEvent(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := new(request)
 
-		userID, err := h.extractUserId(r)
+		userID, err := h.extractUserID(r)
 		if err != nil {
 			makeResponseError(w, h.resolveErrorCode(err), err)
 			return
 		}
 
-		id, err := h.extractId(r)
+		id, err := h.extractID(r)
 		if err != nil {
 			makeResponseError(w, http.StatusBadRequest, err)
 			return
@@ -168,7 +168,7 @@ func (h *Handler) UpdateEvent(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func (h *Handler) extractUserId(r *http.Request) (*models.ID, error) {
+func (h *Handler) extractUserID(r *http.Request) (*models.ID, error) {
 	headerUserID := r.Header.Get("x-user-id")
 	if headerUserID == "" {
 		return nil, domain.ErrUnauthorized
@@ -182,13 +182,13 @@ func (h *Handler) extractUserId(r *http.Request) (*models.ID, error) {
 	return &userID, nil
 }
 
-func (h Handler) extractId(r *http.Request) (*models.ID, error) {
-	requestId, ok := mux.Vars(r)["id"]
+func (h Handler) extractID(r *http.Request) (*models.ID, error) {
+	requestID, ok := mux.Vars(r)["id"]
 	if !ok {
 		return nil, errors.New("event id not specified")
 	}
 
-	id, err := uuid.Parse(requestId)
+	id, err := uuid.Parse(requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -202,13 +202,14 @@ func (h *Handler) resolveErrorCode(err error) int {
 	errPremissionDenied := domain.ErrPremissionDenied
 	errDateBusy := domain.ErrDateBusy
 
-	if errors.Is(err, errNotFound) {
+	switch {
+	case errors.Is(err, errNotFound):
 		return http.StatusNotFound
-	} else if errors.Is(err, errUnauthorized) {
+	case errors.Is(err, errUnauthorized):
 		return http.StatusUnauthorized
-	} else if errors.Is(err, errPremissionDenied) {
+	case errors.Is(err, errPremissionDenied):
 		return http.StatusForbidden
-	} else if errors.Is(err, errDateBusy) {
+	case errors.Is(err, errDateBusy):
 		return http.StatusBadRequest
 	}
 

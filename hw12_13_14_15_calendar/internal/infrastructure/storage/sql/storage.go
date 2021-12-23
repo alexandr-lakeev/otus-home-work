@@ -3,7 +3,6 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
@@ -78,12 +77,7 @@ func (s *Storage) Get(ctx context.Context, id models.ID) (*models.Event, error) 
 	}
 	defer rows.Close()
 
-	domainEvent, err := dbToDomainEvent(event)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domainEvent, nil
+	return dbToDomainEvent(event), nil
 }
 
 func (s *Storage) Add(ctx context.Context, event *models.Event) error {
@@ -162,12 +156,7 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 			return nil, err
 		}
 
-		domainEvent, err := dbToDomainEvent(event)
-		if err != nil {
-			return nil, err
-		}
-
-		events = append(events, domainEvent)
+		events = append(events, *dbToDomainEvent(event))
 	}
 
 	if err != nil {
@@ -177,15 +166,13 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 	return events, nil
 }
 
-func dbToDomainEvent(event dbEvent) (models.Event, error) {
-	log.Println("Duration", event.Duration)
-
-	return models.Event{
+func dbToDomainEvent(event dbEvent) *models.Event {
+	return &models.Event{
 		ID:          event.ID,
 		UserID:      event.UserID,
 		Title:       event.Title,
 		Date:        event.Date,
 		Duration:    time.Minute * time.Duration(event.Duration),
 		Description: event.Description,
-	}, nil
+	}
 }
