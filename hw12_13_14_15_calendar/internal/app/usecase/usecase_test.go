@@ -61,7 +61,7 @@ func TestUseCase(t *testing.T) {
 			Duration: 5 * time.Minute,
 		})
 
-		var errDateBusy = domain.ErrDateBusy
+		errDateBusy := domain.ErrDateBusy
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, errDateBusy)

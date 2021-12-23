@@ -17,10 +17,6 @@ type Handler struct {
 	useCase app.UseCase
 }
 
-type errorResponse struct {
-	errors map[string]string
-}
-
 func NewHandler(useCase app.UseCase) *Handler {
 	return &Handler{
 		useCase: useCase,
@@ -42,25 +38,25 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := new(request)
 
-		headerUserId := r.Header.Get("x-user-id")
-		if headerUserId == "" {
-			makeResponse(w, r, http.StatusUnauthorized, nil)
+		headerUserID := r.Header.Get("x-user-id")
+		if headerUserID == "" {
+			makeResponse(w, http.StatusUnauthorized, nil)
 			return
 		}
 
-		userId, err := uuid.Parse(headerUserId)
+		userID, err := uuid.Parse(headerUserID)
 		if err != nil {
-			makeResponseError(w, r, http.StatusInternalServerError, err)
+			makeResponseError(w, http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-			makeResponseError(w, r, http.StatusInternalServerError, err)
+			makeResponseError(w, http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := validator.New().Struct(request); err != nil {
-			makeResponseError(w, r, http.StatusBadRequest, err.(validator.ValidationErrors))
+			makeResponseError(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -68,7 +64,7 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 
 		err = h.useCase.CreateEvent(ctx, &app.CreateEventCommand{
 			ID:          id,
-			UserID:      userId,
+			UserID:      userID,
 			Title:       request.Title,
 			Description: request.Description,
 			Date:        request.Date,
@@ -78,15 +74,15 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 			errDateBusy := domain.ErrDateBusy
 
 			if errors.Is(err, errDateBusy) {
-				makeResponseError(w, r, http.StatusBadRequest, err)
+				makeResponseError(w, http.StatusBadRequest, err)
 			} else {
-				makeResponseError(w, r, http.StatusInternalServerError, err)
+				makeResponseError(w, http.StatusInternalServerError, err)
 			}
 
 			return
 		}
 
-		makeResponse(w, r, http.StatusOK, response{
+		makeResponse(w, http.StatusOK, response{
 			ID: id.String(),
 		})
 	}

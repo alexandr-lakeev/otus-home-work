@@ -18,11 +18,11 @@ type (
 	responseErrors map[string]string
 )
 
-func makeResponseError(w http.ResponseWriter, r *http.Request, code int, err error) {
+func makeResponseError(w http.ResponseWriter, code int, err error) {
 	respond(w, code, nil, err)
 }
 
-func makeResponse(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+func makeResponse(w http.ResponseWriter, code int, data interface{}) {
 	respond(w, code, data, nil)
 }
 
@@ -41,7 +41,7 @@ func respond(w http.ResponseWriter, code int, data interface{}, err error) {
 
 func createErrors(err error) responseErrors {
 	if err == nil {
-		return *new(responseErrors)
+		return responseErrors(nil)
 	}
 
 	validationError := new(validator.ValidationErrors)

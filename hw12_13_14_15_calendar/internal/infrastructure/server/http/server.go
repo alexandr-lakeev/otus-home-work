@@ -49,10 +49,3 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
-
-type dummyHandler struct{}
-
-func (h *dummyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte("OK"))
-}
