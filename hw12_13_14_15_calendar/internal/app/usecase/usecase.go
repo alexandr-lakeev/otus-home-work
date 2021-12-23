@@ -38,6 +38,41 @@ func (u *UseCase) CreateEvent(ctx context.Context, command *app.CreateEventComma
 	return u.storage.Add(ctx, &event)
 }
 
+func (u *UseCase) GetEvent(ctx context.Context, query *app.GetEventQuery) (*models.Event, error) {
+	event, err := u.storage.Get(ctx, query.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if event.UserID != query.UserID {
+		return nil, domain.ErrPremissionDenied
+	}
+
+	return event, nil
+}
+
+func (u *UseCase) UpdateEvent(ctx context.Context, command *app.UpdateEventCommand) error {
+	event, err := u.storage.Get(ctx, command.ID)
+	if err != nil {
+		return err
+	}
+
+	if event.UserID != command.UserID {
+		return domain.ErrPremissionDenied
+	}
+
+	event.Title = command.Title
+	event.Date = command.Date
+	event.Duration = command.Duration
+	event.Description = command.Description
+
+	if err := u.checkDateBusyForEvent(ctx, event); err != nil {
+		return err
+	}
+
+	return u.storage.Update(ctx, event)
+}
+
 func (u *UseCase) checkDateBusyForEvent(ctx context.Context, event *models.Event) error {
 	events, err := u.storage.GetList(ctx, event.UserID, event.Date, event.Date.Add(event.Duration))
 	if err != nil {

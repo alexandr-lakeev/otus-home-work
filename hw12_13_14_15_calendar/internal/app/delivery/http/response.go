@@ -28,6 +28,9 @@ func makeResponse(w http.ResponseWriter, code int, data interface{}) {
 
 func respond(w http.ResponseWriter, code int, data interface{}, err error) {
 	w.WriteHeader(code)
+	if code == http.StatusNoContent {
+		return
+	}
 
 	response := &response{
 		Data:   data,

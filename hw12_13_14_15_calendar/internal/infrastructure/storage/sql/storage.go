@@ -3,7 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
@@ -19,12 +19,12 @@ type Storage struct {
 }
 
 type dbEvent struct {
-	ID          models.ID     `db:"id"`
-	UserID      models.ID     `db:"user_id"`
-	Date        time.Time     `db:"date"`
-	Duration    time.Duration `db:"duration"`
-	Title       string        `db:"title"`
-	Description string        `db:"description"`
+	ID          models.ID `db:"id"`
+	UserID      models.ID `db:"user_id"`
+	Date        time.Time `db:"date"`
+	Duration    int       `db:"duration"`
+	Title       string    `db:"title"`
+	Description string    `db:"description"`
 }
 
 func New(dsn string) *Storage {
@@ -114,7 +114,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 			description = :description,
 			updated_at = NOW()
 		WHERE
-			id = id AND
+			id = :id AND
 			user_id = :userID
 	`
 
@@ -178,17 +178,14 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 }
 
 func dbToDomainEvent(event dbEvent) (models.Event, error) {
-	duration, err := time.ParseDuration(fmt.Sprintf("%dm", event.Duration))
-	if err != nil {
-		return models.Event{}, err
-	}
+	log.Println("Duration", event.Duration)
 
 	return models.Event{
 		ID:          event.ID,
 		UserID:      event.UserID,
 		Title:       event.Title,
 		Date:        event.Date,
-		Duration:    duration,
+		Duration:    time.Minute * time.Duration(event.Duration),
 		Description: event.Description,
 	}, nil
 }

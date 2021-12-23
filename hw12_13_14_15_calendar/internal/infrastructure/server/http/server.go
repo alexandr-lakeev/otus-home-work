@@ -25,7 +25,8 @@ func NewServer(cfg config.ServerConf, usecase app.UseCase, logger app.Logger) *S
 
 	ctx := context.Background()
 	router.HandleFunc("/api/calendar/v1/events", handler.CreateEvent(ctx)).Methods("POST")
-	// router.HandleFunc("/api/calendar/v1/events/{id:[0-9\\-a-f]+}", handler.GetEvet(ctx)).Methods("GET")
+	router.HandleFunc("/api/calendar/v1/events/{id:[0-9\\-a-f]+}", handler.GetEvent(ctx)).Methods("GET")
+	router.HandleFunc("/api/calendar/v1/events/{id:[0-9\\-a-f]+}", handler.UpdateEvent(ctx)).Methods("POST")
 
 	return &Server{
 		server: &http.Server{
