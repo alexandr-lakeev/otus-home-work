@@ -48,12 +48,6 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, e := range s.events {
-		if event.Date.String() == e.Date.String() && event.UserID == e.UserID && event.ID != e.ID {
-			return domain.ErrDateBusy
-		}
-	}
-
 	s.events[event.ID] = event
 
 	return nil
@@ -65,7 +59,14 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 
 	var result []models.Event
 	for _, e := range s.events {
-		if e.UserID == userID && e.Date.After(from) && e.Date.Before(to) {
+		if e.UserID != userID {
+			continue
+		}
+
+		from2 := e.Date
+		to2 := e.Date.Add(e.Duration)
+
+		if (from.Equal(to2) || from.Before(to2)) && (to.Equal(from2) || to.After(from2)) {
 			result = append(result, *e)
 		}
 	}

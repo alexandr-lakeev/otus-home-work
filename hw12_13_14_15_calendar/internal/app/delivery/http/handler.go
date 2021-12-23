@@ -3,11 +3,12 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 )
@@ -16,58 +17,54 @@ type Handler struct {
 	useCase app.UseCase
 }
 
+type errorResponse struct {
+	errors map[string]string
+}
+
 func NewHandler(useCase app.UseCase) *Handler {
 	return &Handler{
 		useCase: useCase,
 	}
 }
 
-// TODO replace log with logger
-// TODO return bad request errors
 func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
-	type createEventRequest struct {
-		ID          string    `json:"id" validate:"required"`
+	type request struct {
 		Title       string    `json:"title" validate:"required"`
 		Description string    `json:"description"`
 		Date        time.Time `json:"date" validate:"required"`
 		Duration    int       `json:"duration"`
 	}
 
+	type response struct {
+		ID string `json:"id"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		request := new(createEventRequest)
+		request := new(request)
 
 		headerUserId := r.Header.Get("x-user-id")
-
 		if headerUserId == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if err := validator.New().Struct(request); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		id, err := uuid.Parse(request.ID)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			makeResponse(w, r, http.StatusUnauthorized, nil)
 			return
 		}
 
 		userId, err := uuid.Parse(headerUserId)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			makeResponseError(w, r, http.StatusInternalServerError, err)
 			return
 		}
+
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			makeResponseError(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if err := validator.New().Struct(request); err != nil {
+			makeResponseError(w, r, http.StatusBadRequest, err.(validator.ValidationErrors))
+			return
+		}
+
+		id := uuid.New()
 
 		err = h.useCase.CreateEvent(ctx, &app.CreateEventCommand{
 			ID:          id,
@@ -78,9 +75,19 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 			Duration:    time.Minute * time.Duration(request.Duration),
 		})
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			errDateBusy := domain.ErrDateBusy
+
+			if errors.Is(err, errDateBusy) {
+				makeResponseError(w, r, http.StatusBadRequest, err)
+			} else {
+				makeResponseError(w, r, http.StatusInternalServerError, err)
+			}
+
 			return
 		}
+
+		makeResponse(w, r, http.StatusOK, response{
+			ID: id.String(),
+		})
 	}
 }

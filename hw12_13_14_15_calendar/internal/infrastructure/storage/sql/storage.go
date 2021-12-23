@@ -8,7 +8,6 @@ import (
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
-	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v4/stdlib" // nolint
 	"github.com/jmoiron/sqlx"
 )
@@ -20,8 +19,8 @@ type Storage struct {
 }
 
 type dbEvent struct {
-	ID          uuid.UUID     `db:"id"`
-	UserID      uuid.UUID     `db:"user_id"`
+	ID          models.ID     `db:"id"`
+	UserID      models.ID     `db:"user_id"`
 	Date        time.Time     `db:"date"`
 	Duration    time.Duration `db:"duration"`
 	Title       string        `db:"title"`
@@ -52,7 +51,7 @@ func (s *Storage) Close(ctx context.Context) error {
 	return s.conn.Close()
 }
 
-func (s *Storage) Get(ctx context.Context, id uuid.UUID) (*models.Event, error) {
+func (s *Storage) Get(ctx context.Context, id models.ID) (*models.Event, error) {
 	query := `
 		SELECT 
 			id, user_id, title, date, duration, description
@@ -145,8 +144,8 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 
 	rows, err := s.db.NamedQueryContext(ctx, query, map[string]interface{}{
 		"userID": userID,
-		"from":   from.Format("2006-01-02"),
-		"to":     to.Format("2006-01-02"),
+		"from":   from.Format(time.RFC3339),
+		"to":     to.Format(time.RFC3339),
 	})
 	if err != nil {
 		return nil, err
