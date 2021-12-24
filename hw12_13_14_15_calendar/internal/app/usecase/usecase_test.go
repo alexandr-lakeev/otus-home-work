@@ -16,21 +16,35 @@ import (
 )
 
 func TestUseCase(t *testing.T) {
-	t.Run("create event", func(t *testing.T) {
+	t.Run("create and get event", func(t *testing.T) {
 		logger, _ := logger.New(config.LoggerConf{
 			Level: "INFO",
 		})
 
+		id := uuid.New()
+		userID := uuid.New()
+		title := "Dummy event"
+		date := time.Now()
 		usecase := New(memorystorage.New(), logger)
 
 		err := usecase.CreateEvent(context.Background(), &app.CreateEventCommand{
-			ID:     uuid.New(),
-			UserID: uuid.New(),
-			Title:  "Dummy event",
-			Date:   time.Now(),
+			ID:     id,
+			UserID: userID,
+			Title:  title,
+			Date:   date,
 		})
 
 		require.NoError(t, err)
+
+		event, err := usecase.GetEvent(context.Background(), &app.GetEventQuery{
+			ID:     id,
+			UserID: userID,
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, id, event.ID)
+		require.Equal(t, title, event.Title)
+		require.Equal(t, date, event.Date)
 	})
 
 	t.Run("date busy", func(t *testing.T) {

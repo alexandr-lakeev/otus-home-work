@@ -51,6 +51,10 @@ func (u *UseCase) GetEvent(ctx context.Context, query *app.GetEventQuery) (*mode
 	return event, nil
 }
 
+func (u *UseCase) GetList(ctx context.Context, query *app.GetListQuery) ([]models.Event, error) {
+	return u.storage.GetList(ctx, query.UserID, query.From, query.To)
+}
+
 func (u *UseCase) UpdateEvent(ctx context.Context, command *app.UpdateEventCommand) error {
 	event, err := u.storage.Get(ctx, command.ID)
 	if err != nil {

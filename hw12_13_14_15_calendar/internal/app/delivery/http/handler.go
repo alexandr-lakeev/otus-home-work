@@ -19,6 +19,14 @@ type Handler struct {
 	useCase app.UseCase
 }
 
+type responseEvent struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Date        time.Time `json:"date"`
+	Duration    int       `json:"duration"`
+}
+
 func NewHandler(useCase app.UseCase) *Handler {
 	return &Handler{
 		useCase: useCase,
@@ -30,7 +38,7 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 		Title       string    `json:"title" validate:"required"`
 		Description string    `json:"description"`
 		Date        time.Time `json:"date" validate:"required"`
-		Duration    int       `json:"duration"`
+		Duration    int       `json:"duration" validate:"required"`
 	}
 
 	type response struct {
@@ -78,14 +86,6 @@ func (h *Handler) CreateEvent(ctx context.Context) http.HandlerFunc {
 }
 
 func (h *Handler) GetEvent(ctx context.Context) http.HandlerFunc {
-	type responseEvent struct {
-		ID          string    `json:"id"`
-		Title       string    `json:"title"`
-		Description string    `json:"description"`
-		Date        time.Time `json:"date"`
-		Duration    int       `json:"duration"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := h.extractUserID(r)
 		if err != nil {
@@ -118,12 +118,58 @@ func (h *Handler) GetEvent(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) GetList(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := h.extractUserID(r)
+		if err != nil {
+			makeResponseError(w, h.resolveErrorCode(err), err)
+			return
+		}
+
+		from, err := time.Parse(time.RFC3339, r.URL.Query().Get("from"))
+		if err != nil {
+			makeResponseError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		to, err := time.Parse(time.RFC3339, r.URL.Query().Get("to"))
+		if err != nil {
+			makeResponseError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		events, err := h.useCase.GetList(ctx, &app.GetListQuery{
+			UserID: *userID,
+			From:   from,
+			To:     to,
+		})
+		if err != nil {
+			makeResponseError(w, h.resolveErrorCode(err), err)
+			return
+		}
+
+		response := make([]responseEvent, len(events))
+
+		for k, event := range events {
+			response[k] = responseEvent{
+				ID:          event.ID.String(),
+				Title:       event.Title,
+				Description: event.Description,
+				Date:        event.Date,
+				Duration:    int(event.Duration.Minutes()),
+			}
+		}
+
+		makeResponse(w, http.StatusOK, response)
+	}
+}
+
 func (h *Handler) UpdateEvent(ctx context.Context) http.HandlerFunc {
 	type request struct {
 		Title       string    `json:"title" validate:"required"`
 		Description string    `json:"description"`
 		Date        time.Time `json:"date" validate:"required"`
-		Duration    int       `json:"duration"`
+		Duration    int       `json:"duration" validate:"required"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
