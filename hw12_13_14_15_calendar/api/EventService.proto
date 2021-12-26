@@ -45,6 +45,7 @@ message GetListResponse {
 // GetEvent
 message GetEventQuery {
   string id = 1;
+  string user_id = 2;
 }
 
 message GetEventResponse {

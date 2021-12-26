@@ -59,7 +59,7 @@ func main() {
 
 	calendar := usecase.New(storage, logger)
 	httpserver := internalhttp.NewServer(config.Server, calendar, logger)
-	grpcserver := internalgrpc.NewServer(calendar, logger)
+	grpcserver := internalgrpc.NewServer(config.Grpc, calendar, logger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

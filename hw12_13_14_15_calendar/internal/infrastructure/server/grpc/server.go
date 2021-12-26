@@ -2,40 +2,41 @@ package internalgrpc
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
 	deliverygrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc/pb"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"google.golang.org/grpc"
 )
 
 type Service struct {
+	config  config.GrpcConf
 	handler *deliverygrpc.Handler
 	logg    app.Logger
 	pb.UnimplementedCalendarServer
 }
 
-func NewServer(useCase app.UseCase, logger app.Logger) *Service {
-	handler := deliverygrpc.NewHandler(useCase)
-
+func NewServer(cfg config.GrpcConf, useCase app.UseCase, logger app.Logger) *Service {
 	return &Service{
-		handler: handler,
+		config:  cfg,
+		handler: deliverygrpc.NewHandler(useCase),
 		logg:    logger,
 	}
 }
 
 func (s *Service) Start(ctx context.Context) error {
-	lsn, err := net.Listen("tcp", ":50051") // nolint
+	lsn, err := net.Listen("tcp", s.config.ListenAddress)
 	if err != nil {
 		return err
 	}
 
 	server := grpc.NewServer()
-	pb.RegisterCalendarServer(server, new(Service))
+	pb.RegisterCalendarServer(server, s)
 
-	log.Printf("grpc server is starting on %s", lsn.Addr().String())
+	s.logg.Info(fmt.Sprintf("grpc server is starting on %s", lsn.Addr()))
 
 	return server.Serve(lsn)
 }
