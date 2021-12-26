@@ -13,6 +13,7 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/usecase"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
+	internalgrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/server/grpc"
 	internalhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/server/http"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage"
 )
@@ -43,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	storage, err := storage.ResolveStorage(config.Storage)
+	storage, err := storage.New(config.Storage)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +58,8 @@ func main() {
 	defer storage.Close(ctx)
 
 	calendar := usecase.New(storage, logger)
-	server := internalhttp.NewServer(config.Server, calendar, logger)
+	httpserver := internalhttp.NewServer(config.Server, calendar, logger)
+	grpcserver := internalgrpc.NewServer(calendar, logger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -69,16 +71,30 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpserver.Stop(ctx); err != nil {
 			logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
 	logger.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logger.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+	go func() {
+		defer cancel()
+		if err := httpserver.Start(ctx); err != nil {
+			logger.Error("failed to start http server: " + err.Error())
+			cancel()
+			os.Exit(1)
+		}
+	}()
+
+	go func() {
+		defer cancel()
+		if err := grpcserver.Start(ctx); err != nil {
+			logger.Error("failed to start grpc server: " + err.Error())
+			cancel()
+			os.Exit(1)
+		}
+	}()
+
+	<-ctx.Done()
 }

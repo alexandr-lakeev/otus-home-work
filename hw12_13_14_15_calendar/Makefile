@@ -16,6 +16,15 @@ build-img:
 		-t $(DOCKER_IMG) \
 		-f build/Dockerfile .
 
+generate-pb:
+	mkdir -p internal/app/delivery/grpc/pb
+	protoc \
+		-I /usr/local/include \
+		--proto_path=api/ \
+		--go_out=internal/app/delivery/grpc/pb \
+		--go-grpc_out=internal/app/delivery/grpc/pb \
+		api/*.proto
+
 run-img: build-img
 	docker run $(DOCKER_IMG)
 

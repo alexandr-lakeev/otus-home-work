@@ -9,7 +9,7 @@ import (
 	sqlstorage "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage/sql"
 )
 
-func ResolveStorage(cfg config.StorageConf) (storage.Storage, error) {
+func New(cfg config.StorageConf) (storage.Storage, error) {
 	if cfg.Type == config.MemoryStorage {
 		return memorystorage.New(), nil
 	}
