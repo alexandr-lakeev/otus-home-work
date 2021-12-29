@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/usecase"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/usecase"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
 	memorystorage "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage/memory"

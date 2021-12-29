@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	deliverygrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc"
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc/pb"
+	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	deliverygrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/grpc"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/grpc/pb"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"google.golang.org/grpc"
 )

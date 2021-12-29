@@ -1,0 +1,6 @@
+[rabbitmq]
+exchange_name = "events"
+exchange_type = "fanout"
+
+[storage]
+type = "sql"

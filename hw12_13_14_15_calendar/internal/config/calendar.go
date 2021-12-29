@@ -37,11 +37,6 @@ type (
 		Env   string `config:"ENV"`
 		Level string `config:"level"`
 	}
-
-	StorageConf struct {
-		Type string `config:"type"`
-		DSN  string `config:"DSN"`
-	}
 )
 
 func NewConfig(configFile string) (*Config, error) {

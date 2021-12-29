@@ -73,3 +73,11 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 
 	return result, nil
 }
+
+func (s *Storage) GetEventsToNotify(ctx context.Context, duration time.Duration) ([]models.Event, error) {
+	return []models.Event{}, nil
+}
+
+func (s *Storage) DeleteAllEvents(ctx context.Context, duration time.Duration) error {
+	return nil
+}

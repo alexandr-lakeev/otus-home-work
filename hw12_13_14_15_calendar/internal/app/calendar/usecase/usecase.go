@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"

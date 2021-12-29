@@ -1,5 +1,6 @@
 BIN := "./bin/calendar"
-DOCKER_IMG="calendar:develop"
+CALENDAR_DOCKER_IMG="calendar:develop"
+SCHEDULER_DOCKER_IMG="calendar_scheduler:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -8,13 +9,18 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.dev.toml
+	$(BIN) -config ./configs/calendar.dev.toml
 
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-t $(CALENDAR_DOCKER_IMG) \
+		-f build/calendar/Dockerfile .
+	
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(SCHEDULER_DOCKER_IMG) \
+		-f build/scheduler/Dockerfile .
 
 generate-pb:
 	mkdir -p internal/app/delivery/grpc/pb
@@ -26,7 +32,7 @@ generate-pb:
 		api/*.proto
 
 run-img: build-img
-	docker run $(DOCKER_IMG)
+	docker run $(CALENDAR_DOCKER_IMG)
 
 create-network:
 	docker network create calendar || true

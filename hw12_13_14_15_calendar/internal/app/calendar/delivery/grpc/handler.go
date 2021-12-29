@@ -3,8 +3,8 @@ package deliverygrpc
 import (
 	"context"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc/pb"
+	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/grpc/pb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"

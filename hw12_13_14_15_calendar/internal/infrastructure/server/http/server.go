@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	deliveryhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/http"
+	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	deliveryhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/http"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/gorilla/mux"
 )
