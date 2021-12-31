@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
@@ -18,12 +19,13 @@ type Storage struct {
 }
 
 type dbEvent struct {
-	ID          models.ID `db:"id"`
-	UserID      models.ID `db:"user_id"`
-	Date        time.Time `db:"date"`
-	Duration    int       `db:"duration"`
-	Title       string    `db:"title"`
-	Description string    `db:"description"`
+	ID          models.ID    `db:"id"`
+	UserID      models.ID    `db:"user_id"`
+	Date        time.Time    `db:"date"`
+	Duration    int          `db:"duration"`
+	Title       string       `db:"title"`
+	Description string       `db:"description"`
+	NotifiedAt  sql.NullTime `db:"notified_at"`
 }
 
 func New(dsn string) *Storage {
@@ -53,7 +55,7 @@ func (s *Storage) Close(ctx context.Context) error {
 func (s *Storage) Get(ctx context.Context, id models.ID) (*models.Event, error) {
 	query := `
 		SELECT 
-			id, user_id, title, date, duration, description
+			id, user_id, title, date, duration, description, notified_at
 		FROM 
 			events 
 		WHERE 
@@ -106,6 +108,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 			date = :date,
 			duration = :duration,
 			description = :description,
+			notified_at = :notifiedAt,
 			updated_at = NOW()
 		WHERE
 			id = :id AND
@@ -119,6 +122,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 		"date":        event.Date,
 		"duration":    event.Duration.Minutes(),
 		"description": event.Description,
+		"notifiedAt":  event.NotifiedAt,
 	})
 
 	return err
@@ -127,7 +131,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.Time) ([]models.Event, error) {
 	query := `
 		SELECT 
-			id, user_id, title, date, duration, description
+			id, user_id, title, date, duration, description, notified_at
 		FROM 
 			events 
 		WHERE 
@@ -166,16 +170,54 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 	return events, nil
 }
 
-func (s *Storage) GetEventsToNotify(ctx context.Context, duration time.Duration) ([]models.Event, error) {
-	return []models.Event{}, nil
+func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration) ([]models.Event, error) {
+	query := `
+		SELECT 
+			id, user_id, title, date, duration, description, notified_at
+		FROM 
+			events 
+		WHERE 
+			notified_at IS NULL
+			AND date <= :date
+		ORDER BY date
+	`
+
+	log.Printf("\n%+v\n\n", s.db)
+
+	rows, err := s.db.NamedQueryContext(ctx, query, map[string]interface{}{
+		"date": time.Now().Add(duration).Format(time.RFC3339),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []models.Event
+
+	for rows.Next() {
+		var event dbEvent
+
+		err := rows.StructScan(&event)
+		if err != nil {
+			return nil, err
+		}
+
+		events = append(events, *dbToDomainEvent(event))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
 
-func (s *Storage) DeleteAllEvents(ctx context.Context, duration time.Duration) error {
+func (s *Storage) DeleteEvents(ctx context.Context, duration time.Duration) error {
 	return nil
 }
 
 func dbToDomainEvent(event dbEvent) *models.Event {
-	return &models.Event{
+	domainEvent := models.Event{
 		ID:          event.ID,
 		UserID:      event.UserID,
 		Title:       event.Title,
@@ -183,4 +225,10 @@ func dbToDomainEvent(event dbEvent) *models.Event {
 		Duration:    time.Minute * time.Duration(event.Duration),
 		Description: event.Description,
 	}
+
+	if event.NotifiedAt.Valid {
+		domainEvent.NotifiedAt = event.NotifiedAt.Time
+	}
+
+	return &domainEvent
 }

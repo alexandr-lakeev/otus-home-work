@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler/notifier"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
+	internalampq "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/ampq"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage"
-	"github.com/streadway/amqp"
 )
 
 var configFile string
@@ -27,91 +28,32 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(config)
+	ctx := context.Background()
 
 	storage, err := storage.New(config.Storage)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	scheduler := scheduler.New(storage)
+	if err := storage.Connect(ctx); err != nil {
+		log.Fatalln(err)
+	}
+	defer storage.Close(ctx)
 
-	ctx := context.Background()
-	scheduler.Notify(ctx, 5*time.Minute)
-
-	// ticker := time.NewTicker(5 * time.Second)
-
-	// for {
-	// 	log.Println("tick")
-
-	// 	publish()
-
-	// 	<-ticker.C
-	// }
-}
-
-func publish() {
-	connection, err := amqp.Dial("amqp://user:password@rabbit:5672/")
-	if err != nil {
-		fmt.Printf("Dial: %s", err)
+	producer := internalampq.NewProducer(config.Ampq)
+	if err := producer.Connect(ctx); err != nil {
+		log.Println(err)
 		return
 	}
-	defer connection.Close()
+	defer producer.Close(ctx)
 
-	log.Printf("got Connection, getting Channel")
-	channel, err := connection.Channel()
-	if err != nil {
-		fmt.Printf("Channel: %s", err)
-		return
-	}
+	scheduler := notifier.New(storage, producer)
 
-	if err := channel.ExchangeDeclare(
-		"published_events", // name
-		"fanout",           // type
-		true,               // durable
-		false,              // auto-deleted
-		false,              // internal
-		false,              // noWait
-		nil,                // arguments
-	); err != nil {
-		fmt.Printf("Exchange Declare: %s", err)
-		return
-	}
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
 
-	// TODO move to consumer?
-	_, err = channel.QueueDeclare(
-		"published_events.sender",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		fmt.Printf("Queue: %s", err)
-		return
-	}
-
-	if err := channel.QueueBind("published_events.sender", "", "published_events", false, nil); err != nil {
-		fmt.Printf("QueueBind: %s", err)
-		return
-	}
-
-	if err = channel.Publish(
-		"published_events",
-		"",
-		false,
-		false,
-		amqp.Publishing{
-			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
-			Body:            []byte("Foo"),
-			DeliveryMode:    amqp.Transient,
-			Priority:        0,
-		},
-	); err != nil {
-		fmt.Printf("Exchange Publish: %s", err)
+	if err := scheduler.NotifyEvents(ctx, 5*time.Minute); err != nil {
+		log.Println(err)
 		return
 	}
 }

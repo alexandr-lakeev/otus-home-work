@@ -33,4 +33,4 @@ COPY --from=build ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/calendar/scheduler.toml
 COPY ./configs/scheduler.dev.toml ${CONFIG_FILE}
 
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+CMD sleep 5; ${BIN_FILE} -config ${CONFIG_FILE}

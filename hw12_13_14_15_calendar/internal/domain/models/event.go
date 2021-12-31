@@ -15,4 +15,5 @@ type Event struct {
 	Date        time.Time
 	Duration    time.Duration
 	Description string
+	NotifiedAt  time.Time
 }

@@ -1,4 +1,4 @@
-package app
+package appcalendar
 
 type Logger interface {
 	Debug(msg string)
