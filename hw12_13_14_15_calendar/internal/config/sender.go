@@ -9,15 +9,15 @@ import (
 )
 
 type (
-	SchedulerConfig struct {
+	SenderConfig struct {
 		Storage StorageConf
 		Ampq    AmpqConf   `toml:"rabbitmq"`
 		Logger  LoggerConf `toml:"logger"`
 	}
 )
 
-func NewSchedulerConfig(configFile string) (*SchedulerConfig, error) {
-	cfg := SchedulerConfig{}
+func NewSenderConfig(configFile string) (*SenderConfig, error) {
+	cfg := SenderConfig{}
 
 	err := confita.NewLoader(
 		env.NewBackend(),

@@ -8,12 +8,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler/cleaner"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler/notifier"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	internalampq "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/ampq"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage"
 )
+
+const RemindEventDuration = 5 * time.Minute
+const CleanEventDuration = 365 * 24 * time.Hour
 
 var configFile string
 
@@ -54,13 +58,14 @@ func main() {
 	}
 	defer producer.Close(ctx)
 
-	scheduler := notifier.New(storage, producer, logger)
+	notifier := notifier.New(storage, producer, logger)
+	cleaner := cleaner.New(storage, logger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	if err := scheduler.NotifyEvents(ctx, 5*time.Minute); err != nil {
-		logger.Error(err.Error())
-		return
-	}
+	go notifier.NotifyEvents(ctx, RemindEventDuration)
+	go cleaner.ClearEvents(ctx, CleanEventDuration)
+
+	<-ctx.Done()
 }

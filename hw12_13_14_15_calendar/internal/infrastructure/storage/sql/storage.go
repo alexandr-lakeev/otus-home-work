@@ -3,7 +3,6 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
@@ -182,8 +181,6 @@ func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration)
 		ORDER BY date
 	`
 
-	log.Printf("\n%+v\n\n", s.db)
-
 	rows, err := s.db.NamedQueryContext(ctx, query, map[string]interface{}{
 		"date": time.Now().Add(duration).Format(time.RFC3339),
 	})
@@ -213,7 +210,18 @@ func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration)
 }
 
 func (s *Storage) DeleteEvents(ctx context.Context, duration time.Duration) error {
-	return nil
+	query := `
+		DELETE FROM
+			events 
+		WHERE 
+			date < :date
+	`
+
+	_, err := s.db.NamedExecContext(ctx, query, map[string]interface{}{
+		"date": time.Now().Add(-1 * duration).Format(time.RFC3339),
+	})
+
+	return err
 }
 
 func dbToDomainEvent(event dbEvent) *models.Event {

@@ -89,5 +89,14 @@ func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration)
 }
 
 func (s *Storage) DeleteEvents(ctx context.Context, duration time.Duration) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for k, e := range s.events {
+		if e.Date.Before(time.Now().Add(-1 * duration)) {
+			delete(s.events, k)
+		}
+	}
+
 	return nil
 }

@@ -6,5 +6,5 @@ import (
 )
 
 type EventsCleaner interface {
-	ClearEvent(ctx context.Context, duration time.Duration) error
+	ClearEvents(ctx context.Context, duration time.Duration) error
 }

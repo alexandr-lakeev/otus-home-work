@@ -24,13 +24,15 @@ func New(storage storage.Storage, producer appscheduler.Producer, logger app.Log
 	}
 }
 
-func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duration) error {
+func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duration) {
 	// TODO change ticker duration
 	ticker := time.NewTicker(10 * time.Second)
 
 	for {
 		select {
 		case <-ticker.C:
+			n.logger.Info("Start events notification")
+
 			events, err := n.storage.GetUpcomingEvents(ctx, 5*time.Hour)
 			if err != nil {
 				n.logger.Error(err.Error())
@@ -49,7 +51,7 @@ func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duratio
 				}
 			}
 		case <-ctx.Done():
-			return nil
+			return
 		}
 	}
 }
