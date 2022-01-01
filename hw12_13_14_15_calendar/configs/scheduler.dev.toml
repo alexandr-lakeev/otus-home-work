@@ -1,3 +1,6 @@
+[logger]
+level = "DEBUG"
+
 [rabbitmq]
 exchange_name = "events"
 exchange_type = "fanout"

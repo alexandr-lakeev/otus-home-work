@@ -3,7 +3,8 @@ package usecase
 import (
 	"context"
 
-	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	appcalendar "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
@@ -21,7 +22,7 @@ func New(storage storage.Storage, logger app.Logger) *UseCase {
 	}
 }
 
-func (u *UseCase) CreateEvent(ctx context.Context, command *app.CreateEventCommand) error {
+func (u *UseCase) CreateEvent(ctx context.Context, command *appcalendar.CreateEventCommand) error {
 	event := models.Event{
 		ID:          command.ID,
 		UserID:      command.UserID,
@@ -38,7 +39,7 @@ func (u *UseCase) CreateEvent(ctx context.Context, command *app.CreateEventComma
 	return u.storage.Add(ctx, &event)
 }
 
-func (u *UseCase) GetEvent(ctx context.Context, query *app.GetEventQuery) (*models.Event, error) {
+func (u *UseCase) GetEvent(ctx context.Context, query *appcalendar.GetEventQuery) (*models.Event, error) {
 	event, err := u.storage.Get(ctx, query.ID)
 	if err != nil {
 		return nil, err
@@ -51,11 +52,11 @@ func (u *UseCase) GetEvent(ctx context.Context, query *app.GetEventQuery) (*mode
 	return event, nil
 }
 
-func (u *UseCase) GetList(ctx context.Context, query *app.GetListQuery) ([]models.Event, error) {
+func (u *UseCase) GetList(ctx context.Context, query *appcalendar.GetListQuery) ([]models.Event, error) {
 	return u.storage.GetList(ctx, query.UserID, query.From, query.To)
 }
 
-func (u *UseCase) UpdateEvent(ctx context.Context, command *app.UpdateEventCommand) error {
+func (u *UseCase) UpdateEvent(ctx context.Context, command *appcalendar.UpdateEventCommand) error {
 	event, err := u.storage.Get(ctx, command.ID)
 	if err != nil {
 		return err

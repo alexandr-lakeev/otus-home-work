@@ -16,10 +16,10 @@ const (
 
 type (
 	Config struct {
-		Server  ServerConf
-		Grpc    GrpcConf
-		Logger  LoggerConf
-		Storage StorageConf
+		Server  ServerConf  `toml:"server"`
+		Grpc    GrpcConf    `toml:"grpc"`
+		Logger  LoggerConf  `toml:"logger"`
+		Storage StorageConf `toml:"storage"`
 	}
 
 	ServerConf struct {
@@ -31,11 +31,6 @@ type (
 
 	GrpcConf struct {
 		ListenAddress string `config:"grpc_listen_address,require"`
-	}
-
-	LoggerConf struct {
-		Env   string `config:"ENV"`
-		Level string `config:"level"`
 	}
 )
 

@@ -11,7 +11,8 @@ import (
 type (
 	SchedulerConfig struct {
 		Storage StorageConf
-		Ampq    AmpqConf `toml:"rabbitmq"`
+		Ampq    AmpqConf   `toml:"rabbitmq"`
+		Logger  LoggerConf `toml:"logger"`
 	}
 
 	AmpqConf struct {

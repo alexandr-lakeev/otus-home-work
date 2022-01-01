@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	app "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	appcalendar "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/google/uuid"
 )
 
@@ -26,7 +27,7 @@ func newLoggingMiddleware(logger app.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			requestID := uuid.New()
 
-			ctx := context.WithValue(r.Context(), app.RequestIDContextKey, requestID)
+			ctx := context.WithValue(r.Context(), appcalendar.RequestIDContextKey, requestID)
 			rw := &responseWriter{ResponseWriter: w}
 
 			next.ServeHTTP(rw, r.Clone(ctx))

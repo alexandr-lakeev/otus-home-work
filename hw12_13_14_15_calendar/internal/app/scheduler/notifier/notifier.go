@@ -2,9 +2,9 @@ package notifier
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
 	appscheduler "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
@@ -13,12 +13,14 @@ import (
 type EventsNotifier struct {
 	storage  storage.Storage
 	producer appscheduler.Producer
+	logger   app.Logger
 }
 
-func New(storage storage.Storage, producer appscheduler.Producer) *EventsNotifier {
+func New(storage storage.Storage, producer appscheduler.Producer, logger app.Logger) *EventsNotifier {
 	return &EventsNotifier{
 		storage:  storage,
 		producer: producer,
+		logger:   logger,
 	}
 }
 
@@ -31,19 +33,19 @@ func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duratio
 		case <-ticker.C:
 			events, err := n.storage.GetUpcomingEvents(ctx, 5*time.Hour)
 			if err != nil {
-				log.Println(err)
+				n.logger.Error(err.Error())
 			}
 
 			for key := range events {
 				if err := n.producer.Produce(ctx, &events[key]); err != nil {
-					log.Println(err)
+					n.logger.Error(err.Error())
 					continue
 				}
 
 				events[key].NotifiedAt = time.Now()
 
 				if err := n.storage.Update(ctx, &events[key]); err != nil {
-					log.Println(err)
+					n.logger.Error(err.Error())
 				}
 			}
 		case <-ctx.Done():
