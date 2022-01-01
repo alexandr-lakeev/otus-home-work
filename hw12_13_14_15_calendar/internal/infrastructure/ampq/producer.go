@@ -66,7 +66,7 @@ func (p *Producer) Produce(ctx context.Context, data interface{}) error {
 }
 
 func (p *Producer) init() error {
-	if err := p.channel.ExchangeDeclare(
+	return p.channel.ExchangeDeclare(
 		p.config.ExchangeName,
 		p.config.ExchangeType,
 		true,  // durable
@@ -74,23 +74,5 @@ func (p *Producer) init() error {
 		false, // internal
 		false, // noWait
 		nil,   // arguments
-	); err != nil {
-		return err
-	}
-
-	// TODO move to sender consumer?
-	_, err := p.channel.QueueDeclare(
-		p.config.QueueName,
-		true,
-		false,
-		false,
-		false,
-		nil,
 	)
-	if err != nil {
-		return err
-	}
-
-	// TODO move to sender consumer?
-	return p.channel.QueueBind(p.config.QueueName, "", p.config.ExchangeName, false, nil)
 }

@@ -39,12 +39,12 @@ func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duratio
 			}
 
 			for key := range events {
+				events[key].NotifiedAt = time.Now()
+
 				if err := n.producer.Produce(ctx, &events[key]); err != nil {
 					n.logger.Error(err.Error())
 					continue
 				}
-
-				events[key].NotifiedAt = time.Now()
 
 				if err := n.storage.Update(ctx, &events[key]); err != nil {
 					n.logger.Error(err.Error())

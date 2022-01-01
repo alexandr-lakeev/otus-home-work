@@ -4,8 +4,12 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os/signal"
+	"syscall"
 
+	appsender "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/sender"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
+	internalampq "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/ampq"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
 )
 
@@ -28,7 +32,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = context.Background()
+	ctx := context.Background()
 
-	log.Printf("%+v\n", logger)
+	consumer := internalampq.NewConsumer(config.Ampq)
+	if err := consumer.Connect(ctx); err != nil {
+		log.Fatal(err)
+	}
+	defer consumer.Close(ctx)
+
+	sender := appsender.New(consumer, logger)
+
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
+	go sender.Send(ctx)
+
+	<-ctx.Done()
 }

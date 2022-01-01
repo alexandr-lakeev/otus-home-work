@@ -1,6 +1,7 @@
 BIN := "./bin/calendar"
 CALENDAR_DOCKER_IMG="calendar:develop"
 SCHEDULER_DOCKER_IMG="calendar_scheduler:develop"
+SENDER_DOCKER_IMG="calendar_sender:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -21,6 +22,11 @@ build-img:
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		-t $(SCHEDULER_DOCKER_IMG) \
 		-f build/scheduler/Dockerfile .
+
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(SENDER_DOCKER_IMG) \
+		-f build/sender/Dockerfile .
 
 generate-pb:
 	mkdir -p internal/app/delivery/grpc/pb
