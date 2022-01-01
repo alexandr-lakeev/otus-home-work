@@ -2,6 +2,72 @@ syntax = "proto3";
 
 package event;
 
-message Event {
-    // TODO
+option go_package = "./;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+service Calendar {
+  rpc GetList (GetListQuery) returns (GetListResponse) {}
+  rpc GetEvent (GetEventQuery) returns (GetEventResponse) {}
+  rpc CreateEvent (CreateEventCommand) returns (CreateEventResponse) {}
+  rpc UpdateEvent (UpdateEventCommand) returns (UpdateEventResponse) {}
+}
+
+// Common
+message EventCommand {
+  string title = 1;
+  google.protobuf.Timestamp date = 2;
+  google.protobuf.Duration duration = 3;
+  string description = 4;
+}
+
+message EventResponse {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  google.protobuf.Timestamp date = 4;
+  google.protobuf.Duration duration = 5;
+  string description = 6;
+}
+
+// GetList
+message GetListQuery {
+  string user_id = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+}
+
+message GetListResponse {
+  repeated EventResponse events = 1;
+}
+
+// GetEvent
+message GetEventQuery {
+  string id = 1;
+  string user_id = 2;
+}
+
+message GetEventResponse {
+  EventResponse event = 1;
+}
+
+// CreateEvent
+message CreateEventCommand {
+  string user_id = 1;
+  EventCommand event = 2;
+}
+
+message CreateEventResponse {
+  string id = 1;
+}
+
+// UpdateEvent
+message UpdateEventCommand {
+  string id = 1;
+  string user_id = 2;
+  EventCommand event = 3;
+}
+
+message UpdateEventResponse {
 }

@@ -3,12 +3,10 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/models"
-	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v4/stdlib" // nolint
 	"github.com/jmoiron/sqlx"
 )
@@ -20,12 +18,12 @@ type Storage struct {
 }
 
 type dbEvent struct {
-	ID          uuid.UUID     `db:"id"`
-	UserID      uuid.UUID     `db:"user_id"`
-	Date        time.Time     `db:"date"`
-	Duration    time.Duration `db:"duration"`
-	Title       string        `db:"title"`
-	Description string        `db:"description"`
+	ID          models.ID `db:"id"`
+	UserID      models.ID `db:"user_id"`
+	Date        time.Time `db:"date"`
+	Duration    int       `db:"duration"`
+	Title       string    `db:"title"`
+	Description string    `db:"description"`
 }
 
 func New(dsn string) *Storage {
@@ -52,7 +50,7 @@ func (s *Storage) Close(ctx context.Context) error {
 	return s.conn.Close()
 }
 
-func (s *Storage) Get(ctx context.Context, id uuid.UUID) (*models.Event, error) {
+func (s *Storage) Get(ctx context.Context, id models.ID) (*models.Event, error) {
 	query := `
 		SELECT 
 			id, user_id, title, date, duration, description
@@ -79,12 +77,7 @@ func (s *Storage) Get(ctx context.Context, id uuid.UUID) (*models.Event, error) 
 	}
 	defer rows.Close()
 
-	domainEvent, err := dbToDomainEvent(event)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domainEvent, nil
+	return dbToDomainEvent(event), nil
 }
 
 func (s *Storage) Add(ctx context.Context, event *models.Event) error {
@@ -95,7 +88,7 @@ func (s *Storage) Add(ctx context.Context, event *models.Event) error {
 
 	_, err := s.db.NamedExecContext(ctx, query, map[string]interface{}{
 		"id":          event.ID.String(),
-		"UserID":      event.UserID.String(),
+		"userID":      event.UserID.String(),
 		"title":       event.Title,
 		"date":        event.Date,
 		"duration":    event.Duration.Minutes(),
@@ -115,7 +108,7 @@ func (s *Storage) Update(ctx context.Context, event *models.Event) error {
 			description = :description,
 			updated_at = NOW()
 		WHERE
-			id = id AND
+			id = :id AND
 			user_id = :userID
 	`
 
@@ -145,8 +138,8 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 
 	rows, err := s.db.NamedQueryContext(ctx, query, map[string]interface{}{
 		"userID": userID,
-		"from":   from.Format("2006-01-02"),
-		"to":     to.Format("2006-01-02"),
+		"from":   from.Format(time.RFC3339),
+		"to":     to.Format(time.RFC3339),
 	})
 	if err != nil {
 		return nil, err
@@ -163,12 +156,7 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 			return nil, err
 		}
 
-		domainEvent, err := dbToDomainEvent(event)
-		if err != nil {
-			return nil, err
-		}
-
-		events = append(events, domainEvent)
+		events = append(events, *dbToDomainEvent(event))
 	}
 
 	if err != nil {
@@ -178,18 +166,13 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 	return events, nil
 }
 
-func dbToDomainEvent(event dbEvent) (models.Event, error) {
-	duration, err := time.ParseDuration(fmt.Sprintf("%dm", event.Duration))
-	if err != nil {
-		return models.Event{}, err
-	}
-
-	return models.Event{
+func dbToDomainEvent(event dbEvent) *models.Event {
+	return &models.Event{
 		ID:          event.ID,
 		UserID:      event.UserID,
 		Title:       event.Title,
 		Date:        event.Date,
-		Duration:    duration,
+		Duration:    time.Minute * time.Duration(event.Duration),
 		Description: event.Description,
-	}, nil
+	}
 }

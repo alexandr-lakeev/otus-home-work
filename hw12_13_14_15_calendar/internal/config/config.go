@@ -17,15 +17,20 @@ const (
 type (
 	Config struct {
 		Server  ServerConf
+		Grpc    GrpcConf
 		Logger  LoggerConf
 		Storage StorageConf
 	}
 
 	ServerConf struct {
-		BindAddress  string        `config:"bind_address,require"`
-		ReadTimeout  time.Duration `config:"read_timeout"`
-		WriteTimeout time.Duration `config:"write_timeout"`
-		IdleTimeout  time.Duration `config:"idle_timeout"`
+		BindAddress  string        `config:"http_bind_address,require"`
+		ReadTimeout  time.Duration `config:"http_read_timeout"`
+		WriteTimeout time.Duration `config:"http_write_timeout"`
+		IdleTimeout  time.Duration `config:"http_idle_timeout"`
+	}
+
+	GrpcConf struct {
+		ListenAddress string `config:"grpc_listen_address,require"`
 	}
 
 	LoggerConf struct {
@@ -43,6 +48,9 @@ func NewConfig(configFile string) (*Config, error) {
 	cfg := Config{
 		Server: ServerConf{
 			BindAddress: ":8080",
+		},
+		Grpc: GrpcConf{
+			ListenAddress: ":50051",
 		},
 		Storage: StorageConf{
 			Type: MemoryStorage,
