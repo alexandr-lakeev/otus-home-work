@@ -16,8 +16,10 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/storage"
 )
 
-const RemindEventDuration = 5 * time.Minute
-const CleanEventDuration = 365 * 24 * time.Hour
+const (
+	RemindEventDuration = 5 * time.Minute
+	CleanEventDuration  = 365 * 24 * time.Hour
+)
 
 var configFile string
 
