@@ -80,7 +80,9 @@ func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration)
 
 	var result []models.Event
 	for _, e := range s.events {
-		if e.NotifiedAt.IsZero() {
+		remindDate := time.Now().Add(duration)
+
+		if e.Date.Before(remindDate) && e.NotifiedAt.IsZero() {
 			result = append(result, *e)
 		}
 	}
