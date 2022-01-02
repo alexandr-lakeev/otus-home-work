@@ -9,7 +9,8 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
-// TODO add logger.
+const RemindTickerDuration = 1 * time.Minute
+
 type EventsNotifier struct {
 	storage  storage.Storage
 	producer appscheduler.Producer
@@ -25,8 +26,7 @@ func New(storage storage.Storage, producer appscheduler.Producer, logger app.Log
 }
 
 func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duration) {
-	// TODO change ticker duration
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(RemindTickerDuration)
 
 	for {
 		select {
@@ -38,7 +38,9 @@ func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duratio
 				n.logger.Error(err.Error())
 			}
 
-			for key := range events {
+			for key, event := range events {
+				n.logger.Info("Event notification " + event.ID.String())
+
 				events[key].NotifiedAt = time.Now()
 
 				if err := n.producer.Produce(ctx, &events[key]); err != nil {
@@ -50,6 +52,8 @@ func (n *EventsNotifier) NotifyEvents(ctx context.Context, duration time.Duratio
 					n.logger.Error(err.Error())
 				}
 			}
+
+			n.logger.Info("Complete events notification")
 		case <-ctx.Done():
 			return
 		}

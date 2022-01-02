@@ -8,6 +8,8 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
+const CleanTickerDuration = 1 * 24 * time.Hour
+
 type EventsCleaner struct {
 	storage storage.Storage
 	logger  app.Logger
@@ -21,7 +23,7 @@ func New(storage storage.Storage, logger app.Logger) *EventsCleaner {
 }
 
 func (c *EventsCleaner) ClearEvents(ctx context.Context, duration time.Duration) {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(CleanTickerDuration)
 
 	for {
 		select {
