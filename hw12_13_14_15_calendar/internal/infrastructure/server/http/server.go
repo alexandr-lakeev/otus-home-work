@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	deliveryhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/http"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -16,9 +18,20 @@ type Server struct {
 }
 
 func NewServer(cfg config.ServerConf, usecase app.UseCase, logger app.Logger) *Server {
+	router := mux.NewRouter()
+	handler := deliveryhttp.NewHandler(usecase)
+
+	router.Use(newLoggingMiddleware(logger))
+
+	ctx := context.Background()
+	router.HandleFunc("/api/calendar/v1/events", handler.GetList(ctx)).Methods("GET")
+	router.HandleFunc("/api/calendar/v1/events/{id:[0-9\\-a-f]+}", handler.GetEvent(ctx)).Methods("GET")
+	router.HandleFunc("/api/calendar/v1/events", handler.CreateEvent(ctx)).Methods("POST")
+	router.HandleFunc("/api/calendar/v1/events/{id:[0-9\\-a-f]+}", handler.UpdateEvent(ctx)).Methods("POST")
+
 	return &Server{
 		server: &http.Server{
-			Handler:      newLoggingMiddleware(logger)(&dummyHandler{}),
+			Handler:      router,
 			Addr:         cfg.BindAddress,
 			WriteTimeout: cfg.WriteTimeout,
 			ReadTimeout:  cfg.ReadTimeout,
@@ -37,11 +50,4 @@ func (s *Server) Start(ctx context.Context) error {
 
 func (s *Server) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
-}
-
-type dummyHandler struct{}
-
-func (h *dummyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte("OK"))
 }

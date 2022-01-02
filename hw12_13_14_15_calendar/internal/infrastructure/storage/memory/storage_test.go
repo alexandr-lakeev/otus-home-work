@@ -53,35 +53,6 @@ func TestStorage(t *testing.T) {
 		require.ErrorIs(t, domain.ErrEventNotFound, err)
 	})
 
-	t.Run("date busy", func(t *testing.T) {
-		s := New()
-
-		ctx := context.Background()
-		userID := uuid.New()
-		date := time.Now()
-
-		event1 := &models.Event{
-			ID:          uuid.New(),
-			Title:       "New Event 1",
-			Date:        date,
-			Duration:    2 * time.Hour,
-			Description: "Some awesome event",
-			UserID:      userID,
-		}
-
-		event2 := &models.Event{
-			ID:          uuid.New(),
-			Title:       "New Event 2",
-			Date:        date,
-			Duration:    2 * time.Hour,
-			Description: "Some awesome event",
-			UserID:      userID,
-		}
-
-		require.NoError(t, s.Add(ctx, event1))
-		require.ErrorIs(t, domain.ErrDateBusy, s.Add(ctx, event2))
-	})
-
 	t.Run("list", func(t *testing.T) {
 		s := New()
 
