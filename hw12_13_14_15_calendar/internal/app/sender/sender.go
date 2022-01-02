@@ -7,6 +7,8 @@ import (
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
 )
 
+const ThreadsCount = 2
+
 type Sender struct {
 	consumer Consumer
 	logger   app.Logger
@@ -32,5 +34,5 @@ func (s *Sender) Send(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
-	}, 2)
+	}, ThreadsCount)
 }
