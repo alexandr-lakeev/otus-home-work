@@ -51,14 +51,21 @@ run-img: build-img
 create-network:
 	docker network create calendar || true
 
-run-compose: create-network
-	docker-compose -f ./deployments/docker-compose.yaml up
+up: create-network
+	docker-compose -f ./deployments/docker-compose.yaml up -d
+
+down:
+	docker-compose -f ./deployments/docker-compose.yaml down
 
 version: build
 	$(CALENDAR_BIN) version
 
 test:
 	go test -race -v ./internal/...
+
+integration-tests:
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml up --build -d
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml run integration_tests go test
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1

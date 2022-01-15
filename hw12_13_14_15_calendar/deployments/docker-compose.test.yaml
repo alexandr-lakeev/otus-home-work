@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  integration_tests:
+    build: ../tests
+    env_file:
+      - ../.env
+    networks:
+      - calendar
