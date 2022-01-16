@@ -1,4 +1,4 @@
-package scripts
+package tests
 
 import (
 	"log"
@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 
 	suite := godog.TestSuite{
 		ScenarioInitializer: func(s *godog.ScenarioContext) {
-			// Add step definitions here.
+			FeatureContext(s)
 		},
 		Options: &godog.Options{
 			Format:    "pretty",
