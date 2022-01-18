@@ -1,0 +1,10 @@
+[logger]
+level = "DEBUG"
+
+[rabbitmq]
+exchange_name = "events"
+exchange_type = "fanout"
+queue_name = "events.sender"
+
+[storage]
+type = "sql"

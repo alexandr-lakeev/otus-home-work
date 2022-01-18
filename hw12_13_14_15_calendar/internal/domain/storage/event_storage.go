@@ -14,4 +14,6 @@ type Storage interface {
 	Add(ctx context.Context, event *models.Event) error
 	Update(ctx context.Context, event *models.Event) error
 	GetList(ctx context.Context, userID models.ID, from, to time.Time) ([]models.Event, error)
+	GetUpcomingEvents(context.Context, time.Duration) ([]models.Event, error)
+	DeleteEvents(context.Context, time.Duration) error
 }

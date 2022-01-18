@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
+	appcalendar "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/infrastructure/logger"
@@ -27,7 +27,7 @@ func TestUseCase(t *testing.T) {
 		date := time.Now()
 		usecase := New(memorystorage.New(), logger)
 
-		err := usecase.CreateEvent(context.Background(), &app.CreateEventCommand{
+		err := usecase.CreateEvent(context.Background(), &appcalendar.CreateEventCommand{
 			ID:     id,
 			UserID: userID,
 			Title:  title,
@@ -36,7 +36,7 @@ func TestUseCase(t *testing.T) {
 
 		require.NoError(t, err)
 
-		event, err := usecase.GetEvent(context.Background(), &app.GetEventQuery{
+		event, err := usecase.GetEvent(context.Background(), &appcalendar.GetEventQuery{
 			ID:     id,
 			UserID: userID,
 		})
@@ -57,7 +57,7 @@ func TestUseCase(t *testing.T) {
 		userID := uuid.New()
 		beginDate := time.Now()
 
-		err := usecase.CreateEvent(context.Background(), &app.CreateEventCommand{
+		err := usecase.CreateEvent(context.Background(), &appcalendar.CreateEventCommand{
 			ID:       uuid.New(),
 			UserID:   userID,
 			Title:    "Dummy event",
@@ -67,7 +67,7 @@ func TestUseCase(t *testing.T) {
 
 		require.NoError(t, err)
 
-		err = usecase.CreateEvent(context.Background(), &app.CreateEventCommand{
+		err = usecase.CreateEvent(context.Background(), &appcalendar.CreateEventCommand{
 			ID:       uuid.New(),
 			UserID:   userID,
 			Title:    "Dummy event",
@@ -80,7 +80,7 @@ func TestUseCase(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, errDateBusy)
 
-		err = usecase.CreateEvent(context.Background(), &app.CreateEventCommand{
+		err = usecase.CreateEvent(context.Background(), &appcalendar.CreateEventCommand{
 			ID:       uuid.New(),
 			UserID:   userID,
 			Title:    "Dummy event",

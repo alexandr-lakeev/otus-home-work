@@ -1,0 +1,6 @@
+[logger]
+level = "DEBUG"
+
+[rabbitmq]
+exchange_name = "events"
+queue_name = "events.sender"

@@ -1,4 +1,4 @@
-package app
+package appcalendar
 
 import (
 	"context"

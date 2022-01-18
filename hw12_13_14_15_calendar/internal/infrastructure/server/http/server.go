@@ -6,18 +6,19 @@ import (
 	"net/http"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	deliveryhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/http"
+	appcalendar "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	deliveryhttp "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/http"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/gorilla/mux"
 )
 
 type Server struct {
 	server  *http.Server
-	usecase app.UseCase
+	usecase appcalendar.UseCase
 	logg    app.Logger
 }
 
-func NewServer(cfg config.ServerConf, usecase app.UseCase, logger app.Logger) *Server {
+func NewServer(cfg config.ServerConf, usecase appcalendar.UseCase, logger app.Logger) *Server {
 	router := mux.NewRouter()
 	handler := deliveryhttp.NewHandler(usecase)
 

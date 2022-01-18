@@ -1,20 +1,38 @@
-BIN := "./bin/calendar"
-DOCKER_IMG="calendar:develop"
+CALENDAR_BIN := "./bin/calendar"
+SCHEDULER_BIN := "./bin/scheduler"
+SENDER_BIN := "./bin/sender"
+CALENDAR_DOCKER_IMG="calendar:develop"
+SCHEDULER_DOCKER_IMG="calendar_scheduler:develop"
+SENDER_DOCKER_IMG="calendar_sender:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(CALENDAR_BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(SCHEDULER_BIN) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+	go build -v -o $(SENDER_BIN) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/config.dev.toml
+	$(CALENDAR_BIN) -config ./configs/calendar.dev.toml
+	$(SCHEDULER_BIN) -config ./configs/scheduler.dev.toml
+	$(SENDER_BIN) -config ./configs/sender.dev.toml
 
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-t $(CALENDAR_DOCKER_IMG) \
+		-f build/calendar/Dockerfile .
+	
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(SCHEDULER_DOCKER_IMG) \
+		-f build/scheduler/Dockerfile .
+
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(SENDER_DOCKER_IMG) \
+		-f build/sender/Dockerfile .
 
 generate-pb:
 	mkdir -p internal/app/delivery/grpc/pb
@@ -26,7 +44,9 @@ generate-pb:
 		api/*.proto
 
 run-img: build-img
-	docker run $(DOCKER_IMG)
+	docker run $(CALENDAR_DOCKER_IMG)
+	docker run $(SCHEDULER_DOCKER_IMG)
+	docker run $(SENDER_DOCKER_IMG)
 
 create-network:
 	docker network create calendar || true
@@ -35,7 +55,7 @@ run-compose: create-network
 	docker-compose -f ./deployments/docker-compose.yaml up
 
 version: build
-	$(BIN) version
+	$(CALENDAR_BIN) version
 
 test:
 	go test -race -v ./internal/...

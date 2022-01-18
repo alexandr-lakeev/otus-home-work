@@ -73,3 +73,32 @@ func (s *Storage) GetList(ctx context.Context, userID models.ID, from, to time.T
 
 	return result, nil
 }
+
+func (s *Storage) GetUpcomingEvents(ctx context.Context, duration time.Duration) ([]models.Event, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var result []models.Event
+	for _, e := range s.events {
+		remindDate := time.Now().Add(duration)
+
+		if e.Date.Before(remindDate) && e.NotifiedAt.IsZero() {
+			result = append(result, *e)
+		}
+	}
+
+	return result, nil
+}
+
+func (s *Storage) DeleteEvents(ctx context.Context, duration time.Duration) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for k, e := range s.events {
+		if e.Date.Before(time.Now().Add(-1 * duration)) {
+			delete(s.events, k)
+		}
+	}
+
+	return nil
+}

@@ -6,8 +6,9 @@ import (
 	"net"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	deliverygrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc"
-	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/delivery/grpc/pb"
+	appcalendar "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar"
+	deliverygrpc "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/grpc"
+	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/calendar/delivery/grpc/pb"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/config"
 	"google.golang.org/grpc"
 )
@@ -19,7 +20,7 @@ type Service struct {
 	pb.UnimplementedCalendarServer
 }
 
-func NewServer(cfg config.GrpcConf, useCase app.UseCase, logger app.Logger) *Service {
+func NewServer(cfg config.GrpcConf, useCase appcalendar.UseCase, logger app.Logger) *Service {
 	return &Service{
 		config:  cfg,
 		handler: deliverygrpc.NewHandler(useCase),
