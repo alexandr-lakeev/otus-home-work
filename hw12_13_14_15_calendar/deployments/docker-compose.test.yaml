@@ -5,5 +5,8 @@ services:
     build: ../tests
     env_file:
       - ../.env
+    depends_on:
+      - backend
+      - rabbit
     networks:
       - calendar

@@ -7,4 +7,5 @@ require (
 	github.com/cucumber/messages-go/v10 v10.0.3 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/streadway/amqp v1.0.0 // indirect
 )

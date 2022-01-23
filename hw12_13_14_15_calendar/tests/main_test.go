@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-const delay = 5 * time.Second
+const delay = 10 * time.Second
 
 func TestMain(m *testing.M) {
 	log.Printf("wait %s for service availability...", delay)

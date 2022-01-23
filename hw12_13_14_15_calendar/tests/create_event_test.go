@@ -7,16 +7,92 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
 	"github.com/google/uuid"
+	"github.com/streadway/amqp"
+)
+
+const amqpURL = "amqp://user:password@rabbit:5672/"
+
+const (
+	queueName    = "test.integration"
+	exchangeName = "test"
 )
 
 type calendarTest struct {
+	conn          *amqp.Connection
+	ch            *amqp.Channel
+	messages      [][]byte
+	messagesMutex *sync.RWMutex
+	stopSignal    chan struct{}
+
 	userID             uuid.UUID
 	responseStatusCode int
 	responseBody       []byte
+}
+
+func (test *calendarTest) startConsuming(*messages.Pickle) {
+	test.messages = make([][]byte, 0)
+	test.messagesMutex = new(sync.RWMutex)
+	test.stopSignal = make(chan struct{})
+
+	var err error
+
+	test.conn, err = amqp.Dial(amqpURL)
+	if err != nil {
+		panic(err)
+	}
+
+	test.ch, err = test.conn.Channel()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = test.ch.QueueDeclare(queueName, true, false, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = test.ch.QueueBind(queueName, "", exchangeName, false, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	events, err := test.ch.Consume(queueName, "", true, true, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	go func(stop <-chan struct{}) {
+		for {
+			select {
+			case <-stop:
+				return
+			case event := <-events:
+				test.messagesMutex.Lock()
+				test.messages = append(test.messages, event.Body)
+				test.messagesMutex.Unlock()
+			}
+		}
+	}(test.stopSignal)
+}
+
+func (test *calendarTest) stopConsuming(*messages.Pickle, error) {
+	test.stopSignal <- struct{}{}
+
+	if err := test.ch.Close(); err != nil {
+		panic(err)
+	}
+
+	if err := test.conn.Close(); err != nil {
+		panic(err)
+	}
+
+	test.messages = nil
 }
 
 func (test *calendarTest) createUserId(*messages.Pickle) {
@@ -60,7 +136,9 @@ func (test *calendarTest) addTestEvents(*messages.Pickle) {
 	for _, eventJson := range testEventsJson {
 		body := ioutil.NopCloser(strings.NewReader(eventJson))
 
-		client := http.Client{}
+		client := http.Client{
+			Timeout: 1 * time.Second,
+		}
 		request := &http.Request{
 			Method: http.MethodPost,
 			URL:    url,
@@ -135,7 +213,9 @@ func (test *calendarTest) iSendRequestTo(httpMethod, addr string) error {
 			return err
 		}
 
-		client := http.Client{}
+		client := http.Client{
+			Timeout: 1 * time.Second,
+		}
 		request := &http.Request{
 			Method: httpMethod,
 			URL:    url,
@@ -197,9 +277,30 @@ func (test *calendarTest) theJsonShouldContainEvents(eventsCount int) error {
 	return nil
 }
 
+func (test *calendarTest) iReceiveEventWithTitle(eventTitle string) error {
+	time.Sleep(10 * time.Second)
+
+	test.messagesMutex.RLock()
+	defer test.messagesMutex.RUnlock()
+
+	var event map[string]string
+
+	for _, msg := range test.messages {
+		event = make(map[string]string)
+		json.Unmarshal(msg, &event)
+
+		if event["Title"] == eventTitle {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("event with title '%s' was not found in %s", eventTitle, test.messages)
+}
+
 func FeatureContext(s *godog.ScenarioContext) {
 	test := new(calendarTest)
 
+	s.BeforeScenario(test.startConsuming)
 	s.BeforeScenario(test.createUserId)
 	s.BeforeScenario(test.addTestEvents)
 
@@ -208,4 +309,7 @@ func FeatureContext(s *godog.ScenarioContext) {
 	s.Step(`^The response code should be (\d+)$`, test.theResponseCodeShouldBe)
 	s.Step(`^The error should be "([^"]*)" in The field "([^"]*)"$`, test.theErrorShouldBeInTheField)
 	s.Step(`^The json should contain (\d+) event[s]?$`, test.theJsonShouldContainEvents)
+	s.Step(`^I receive event with title "([^"]*)"$`, test.iReceiveEventWithTitle)
+
+	s.AfterScenario(test.stopConsuming)
 }

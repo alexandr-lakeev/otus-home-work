@@ -63,9 +63,10 @@ version: build
 test:
 	go test -race -v ./internal/...
 
-integration-tests:
+integration-tests: create-network
 	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml up --build -d
-	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml run integration_tests go test
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml run integration_tests
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml down
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1

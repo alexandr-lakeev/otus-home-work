@@ -22,25 +22,38 @@ func init() {
 func main() {
 	flag.Parse()
 
-	config, err := config.NewSenderConfig(configFile)
+	cfg, err := config.NewSenderConfig(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	logger, err := logger.New(config.Logger)
+	logger, err := logger.New(cfg.Logger)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	ctx := context.Background()
 
-	consumer := internalampq.NewConsumer(config.Ampq)
+	ampqTestConf := config.AmpqConf{
+		URL:          cfg.Ampq.URL,
+		ExchangeType: "fanout",
+		ExchangeName: "test",
+	}
+	producer := internalampq.NewProducer(ampqTestConf)
+	if err := producer.Connect(ctx); err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	defer producer.Close(ctx)
+
+	consumer := internalampq.NewConsumer(cfg.Ampq)
 	if err := consumer.Connect(ctx); err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
+		return
 	}
 	defer consumer.Close(ctx)
 
-	sender := appsender.New(consumer, logger)
+	sender := appsender.New(consumer, producer, logger)
 
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
