@@ -52,7 +52,14 @@ func createErrors(err error) responseErrors {
 	if errors.As(err, validationError) {
 		errors := make(responseErrors)
 		for _, e := range *validationError {
-			errors[e.Field()] = e.Translate(nil)
+			var errText string
+			switch e.Tag() {
+			case "required":
+				errText = "this field is required"
+			default:
+				errText = e.Translate(nil)
+			}
+			errors[e.Field()] = errText
 		}
 
 		return errors

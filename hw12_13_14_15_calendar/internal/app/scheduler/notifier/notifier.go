@@ -5,19 +5,18 @@ import (
 	"time"
 
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app"
-	appscheduler "github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/app/scheduler"
 	"github.com/alexandr-lakeev/otus-home-work/hw12_13_14_15_calendar/internal/domain/storage"
 )
 
-const RemindTickerDuration = 1 * time.Minute
+const RemindTickerDuration = 5 * time.Second
 
 type EventsNotifier struct {
 	storage  storage.Storage
-	producer appscheduler.Producer
+	producer app.Producer
 	logger   app.Logger
 }
 
-func New(storage storage.Storage, producer appscheduler.Producer, logger app.Logger) *EventsNotifier {
+func New(storage storage.Storage, producer app.Producer, logger app.Logger) *EventsNotifier {
 	return &EventsNotifier{
 		storage:  storage,
 		producer: producer,

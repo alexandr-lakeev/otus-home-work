@@ -48,8 +48,7 @@ func main() {
 	}
 
 	if err := storage.Connect(ctx); err != nil {
-		logger.Error(err.Error())
-		return
+		log.Fatal(err)
 	}
 	defer storage.Close(ctx)
 

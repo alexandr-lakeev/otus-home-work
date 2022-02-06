@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  integration_tests:
+    build: ../tests
+    env_file:
+      - ../.env
+    depends_on:
+      - backend
+      - rabbit
+    networks:
+      - calendar

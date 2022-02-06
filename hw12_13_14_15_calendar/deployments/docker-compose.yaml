@@ -8,6 +8,7 @@ services:
       - "50051:50051"
     env_file:
       - ../.env
+    restart: "on-failure"
     depends_on:
       - db
       - migrate
@@ -18,6 +19,7 @@ services:
     image: calendar_scheduler:develop
     env_file:
       - ../.env
+    restart: "on-failure"
     depends_on:
       - db
       - migrate
@@ -29,6 +31,7 @@ services:
     image: calendar_sender:develop
     env_file:
       - ../.env
+    restart: "on-failure"
     depends_on:
       - rabbit
     networks:
@@ -53,6 +56,7 @@ services:
     volumes:
       - ../deployments/migrate-entrypoint.sh:/migrate-entrypoint.sh
       - ../migrations:/migrations:rw
+    restart: "on-failure"
     env_file:
       - ../.env
     depends_on:
